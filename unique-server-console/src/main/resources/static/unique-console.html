@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang='zh-CN'>
+<head>
+    <title>Unique Sequence Console</title>
+    <meta charset='UTF-8'>
+    <meta content='Unique Sequence Console' name='description'>
+    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <link rel="stylesheet" href="styles/vuetify.min.css" type="text/css">
+</head>
+<body>
+<main id='app'>
+    <div v-for="seq in monitor.sequences">
+        <div>key: {{seq.key}}</div>
+        <div>current: {{seq.cur}}</div>
+        <div>maximum: {{seq.max}}</div>
+        <div>increment: {{seq.increment}}</div>
+        <div>cache-size: {{seq.cache}}</div>
+        <div>version: {{seq.version}}</div>
+    </div>
+</main>
+<script src='scripts/vue.min.js'></script>
+<script src='scripts/vue-router.min.js'></script>
+<script src="scripts/vuetify.min.js"></script>
+<script src='scripts/axios.min.js'></script>
+<script>
+    const api = {
+        console: {
+            getMonitor(params, callback) {
+                $get(`/consoles/monitors`, params, callback);
+            },
+            loadConfiguration(params, callback) {
+                $patch(`/consoles/configurations`, params, callback);
+            },
+            saveSequence(params, callback) {
+                $post(`/consoles/sequences`, params, callback);
+            },
+            updateSequence(params, callback) {
+                $put(`/consoles/sequences/${params.key}`, params, callback);
+            },
+            deleteSequence(params, callback) {
+                $delete(`/consoles/sequences/${params.key}`, params, callback);
+            },
+        },
+    };
+
+    const vm = new Vue({
+        el: '#app',
+        data: {
+            monitor: {
+                sequences: [],
+            }
+        },
+        methods: {
+            init() {
+                api.console.getMonitor(null, (result) => {
+                    if (result.success) {
+                        this.monitor = result.data;
+                    }
+                });
+                api.console.loadConfiguration(null, (result) => {
+                    if (result.success) {
+                        console.log(result.message);
+                    }
+                });
+            },
+        },
+        created() {
+            this.init();
+        },
+    });
+
+    function $get(uri, params, callback) {
+        handler(axios.get(uri, {params}), callback);
+    }
+
+    function $post(uri, params, callback) {
+        handler(axios.post(uri, params), callback);
+    }
+
+    function $put(uri, params, callback) {
+        handler(axios.put(uri, params), callback);
+    }
+
+    function $patch(uri, params, callback) {
+        handler(axios.patch(uri, params), callback);
+    }
+
+    function $delete(uri, params, callback) {
+        handler(axios.delete(uri, {params}), callback);
+    }
+
+    function handler(o, callback) {
+        o.then((result) => {
+            if (callback) {
+                callback(result.data);
+            }
+        }).catch((error) => {
+            if (callback) {
+                callback({
+                    success: false,
+                    message: error.response.statusText
+                });
+            }
+        });
+    }
+
+</script>
+</body>
+</html>
