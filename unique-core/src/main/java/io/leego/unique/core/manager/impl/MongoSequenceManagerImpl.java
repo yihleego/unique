@@ -1,11 +1,7 @@
 package io.leego.unique.core.manager.impl;
 
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -22,8 +18,11 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,26 +36,6 @@ public class MongoSequenceManagerImpl implements SequenceManager {
     protected final String databaseName;
     protected final String collectionName;
 
-    public MongoSequenceManagerImpl(String url, String username, String password, String databaseName, String collectionName) {
-        Objects.requireNonNull(url);
-        Objects.requireNonNull(databaseName);
-        Objects.requireNonNull(collectionName);
-        MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(url));
-        if (username != null && username.length() > 0) {
-            MongoCredential credential = MongoCredential.createCredential(
-                    username,
-                    databaseName,
-                    password != null ? password.toCharArray() : null);
-            builder.credential(credential);
-        }
-        this.mongoClient = MongoClients.create(builder.build());
-        this.database = this.mongoClient.getDatabase(databaseName);
-        this.collection = this.database.getCollection(collectionName);
-        this.databaseName = databaseName;
-        this.collectionName = collectionName;
-    }
-
     public MongoSequenceManagerImpl(MongoClient mongoClient, String databaseName, String collectionName) {
         Objects.requireNonNull(mongoClient);
         Objects.requireNonNull(databaseName);
@@ -69,7 +48,17 @@ public class MongoSequenceManagerImpl implements SequenceManager {
     }
 
     @Override
-    public List<Sequence> query() {
+    public Sequence findByKey(String key) {
+        Bson filter = Filters.eq(SequenceColumn.KEY.getMongoColumn(), key);
+        List<Sequence> list = toList(collection.find(filter));
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
+        return list.get(0);
+    }
+
+    @Override
+    public List<Sequence> findAll() {
         return toList(collection.find());
     }
 
@@ -89,7 +78,8 @@ public class MongoSequenceManagerImpl implements SequenceManager {
                 .append(SequenceColumn.VALUE.getMongoColumn(), sequence.getValue())
                 .append(SequenceColumn.INCREMENT.getMongoColumn(), sequence.getIncrement())
                 .append(SequenceColumn.CACHE.getMongoColumn(), sequence.getCache())
-                .append(SequenceColumn.VERSION.getMongoColumn(), sequence.getVersion());
+                .append(SequenceColumn.VERSION.getMongoColumn(), sequence.getVersion())
+                .append(SequenceColumn.CREATE_TIME.getMongoColumn(), sequence.getCreateTime());
         return collection.insertOne(save).wasAcknowledged() ? 1 : 0;
     }
 
@@ -99,7 +89,8 @@ public class MongoSequenceManagerImpl implements SequenceManager {
         Bson update = Updates.combine(
                 Updates.set(SequenceColumn.INCREMENT.getMongoColumn(), sequence.getIncrement()),
                 Updates.set(SequenceColumn.CACHE.getMongoColumn(), sequence.getCache()),
-                Updates.inc(SequenceColumn.VERSION.getMongoColumn(), 1));
+                Updates.inc(SequenceColumn.VERSION.getMongoColumn(), 1),
+                Updates.set(SequenceColumn.UPDATE_TIME.getMongoColumn(), sequence.getUpdateTime()));
         return (int) collection.updateOne(filter, update).getModifiedCount();
     }
 
@@ -126,8 +117,10 @@ public class MongoSequenceManagerImpl implements SequenceManager {
                 for (PropertyDescriptor descriptor : descriptors) {
                     SequenceColumn column = SequenceColumn.get(descriptor.getName());
                     if (column != null) {
-                        Object value = document.get(column.getMongoColumn(), column.getType());
-                        descriptor.getWriteMethod().invoke(sequence, value);
+                        Object value = getValue(document.get(column.getMongoColumn()), descriptor.getPropertyType());
+                        if (value != null) {
+                            descriptor.getWriteMethod().invoke(sequence, value);
+                        }
                     }
                 }
             }
@@ -135,6 +128,19 @@ public class MongoSequenceManagerImpl implements SequenceManager {
         } catch (IntrospectionException | InvocationTargetException | IllegalAccessException e) {
             throw new ConversionException(e);
         }
+    }
+
+    private Object getValue(Object value, Class<?> type) {
+        if (value != null) {
+            if (value.getClass() == type) {
+                return value;
+            } else {
+                if (value.getClass() == Date.class && type == LocalDateTime.class) {
+                    return LocalDateTime.ofInstant(((Date) value).toInstant(), ZoneId.systemDefault());
+                }
+            }
+        }
+        return null;
     }
 
 }

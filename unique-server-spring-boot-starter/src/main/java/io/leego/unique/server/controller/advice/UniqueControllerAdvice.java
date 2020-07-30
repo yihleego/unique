@@ -1,4 +1,4 @@
-package io.leego.unique.server.controller;
+package io.leego.unique.server.controller.advice;
 
 import io.leego.unique.common.Result;
 import io.leego.unique.common.util.ErrorCode;
@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * @author Yihleego
  */
-@RestControllerAdvice
-public class GlobalControllerAdvice {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalControllerAdvice.class);
+@RestControllerAdvice(basePackages = "io.leego.unique.server")
+public class UniqueControllerAdvice {
+    private static final Logger logger = LoggerFactory.getLogger(UniqueControllerAdvice.class);
 
     /**
      * Catches exceptions

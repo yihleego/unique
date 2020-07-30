@@ -1,29 +1,32 @@
-package io.leego.unique.common;
+package io.leego.unique.core.entity;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author Yihleego
  */
-public class MonitoredSequence implements Serializable {
-    private static final long serialVersionUID = 7672981058505022894L;
+public class SnapshotSequence implements Serializable {
+    private static final long serialVersionUID = 7486120717801149583L;
     private String key;
     private long cur;
     private long max;
     private int increment;
     private int cache;
     private int version;
+    private LocalDateTime snapshotTime;
 
-    public MonitoredSequence() {
+    public SnapshotSequence() {
     }
 
-    public MonitoredSequence(String key, long cur, long max, int increment, int cache, int version) {
+    public SnapshotSequence(String key, long cur, long max, int increment, int cache, int version, LocalDateTime snapshotTime) {
         this.key = key;
         this.cur = cur;
         this.max = max;
         this.increment = increment;
         this.cache = cache;
         this.version = version;
+        this.snapshotTime = snapshotTime;
     }
 
     public String getKey() {
@@ -72,5 +75,13 @@ public class MonitoredSequence implements Serializable {
 
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    public LocalDateTime getSnapshotTime() {
+        return snapshotTime;
+    }
+
+    public void setSnapshotTime(LocalDateTime snapshotTime) {
+        this.snapshotTime = snapshotTime;
     }
 }

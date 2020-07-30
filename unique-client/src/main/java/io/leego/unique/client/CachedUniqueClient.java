@@ -84,7 +84,7 @@ public class CachedUniqueClient extends AbstractUniqueClient {
         CachedSeq seq = getSeq(key);
         try {
             for (int i = 0; i < size; i++) {
-                if (i != 0 && seq.isEmpty()) {
+                if (seq.isEmpty() && i != 0) {
                     trySync(seq);
                 }
                 Long value = seq.poll();
@@ -111,7 +111,7 @@ public class CachedUniqueClient extends AbstractUniqueClient {
         return seq;
     }
 
-    private void trySync(final CachedSeq seq) {
+    protected void trySync(final CachedSeq seq) {
         if (!seq.isSyncable()) {
             return;
         }

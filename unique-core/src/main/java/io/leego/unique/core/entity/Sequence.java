@@ -1,6 +1,7 @@
 package io.leego.unique.core.entity;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author Yihleego
@@ -12,16 +13,20 @@ public class Sequence implements Serializable {
     private Integer increment;
     private Integer cache;
     private Integer version;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 
     public Sequence() {
     }
 
-    public Sequence(String key, Long value, Integer increment, Integer cache, Integer version) {
+    public Sequence(String key, Long value, Integer increment, Integer cache, Integer version, LocalDateTime createTime, LocalDateTime updateTime) {
         this.key = key;
         this.value = value;
         this.increment = increment;
         this.cache = cache;
         this.version = version;
+        this.createTime = createTime;
+        this.updateTime = updateTime;
     }
 
     public String getKey() {
@@ -64,4 +69,19 @@ public class Sequence implements Serializable {
         this.version = version;
     }
 
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
 }

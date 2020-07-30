@@ -19,12 +19,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Yihleego
  */
 public class ResponseDecoder implements Decoder {
     private final ObjectMapper objectMapper;
+    private final ConcurrentMap<String, JavaType> typeMap = new ConcurrentHashMap<>();
 
     public ResponseDecoder() {
         this.objectMapper = new ObjectMapper()
@@ -53,13 +56,17 @@ public class ResponseDecoder implements Decoder {
         }
     }
 
-    public static JavaType getJavaType(Type type) {
+    protected JavaType getJavaType(Type type) {
+        return typeMap.computeIfAbsent(type.getTypeName(), key -> createJavaType(type));
+    }
+
+    protected JavaType createJavaType(Type type) {
         if (type instanceof ParameterizedType) {
             Type[] actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
             Class<?> rowClass = (Class<?>) ((ParameterizedType) type).getRawType();
             JavaType[] javaTypes = new JavaType[actualTypeArguments.length];
             for (int i = 0; i < actualTypeArguments.length; i++) {
-                javaTypes[i] = getJavaType(actualTypeArguments[i]);
+                javaTypes[i] = createJavaType(actualTypeArguments[i]);
             }
             return TypeFactory.defaultInstance().constructParametricType(rowClass, javaTypes);
         } else {

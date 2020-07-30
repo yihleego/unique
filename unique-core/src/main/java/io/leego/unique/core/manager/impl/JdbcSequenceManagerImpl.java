@@ -28,7 +28,6 @@ public class JdbcSequenceManagerImpl implements SequenceManager {
     protected final DataSource dataSource;
     protected final SqlSessionFactory sqlSessionFactory;
     protected final String tableName;
-    protected final Pattern tableNamePattern = Pattern.compile("^[a-zA-Z0-9_]+$");
 
     public JdbcSequenceManagerImpl(DataSource dataSource, String tableName) {
         Objects.requireNonNull(dataSource);
@@ -40,10 +39,18 @@ public class JdbcSequenceManagerImpl implements SequenceManager {
     }
 
     @Override
-    public List<Sequence> query() {
+    public Sequence findByKey(String key) {
         try (SqlSession session = sqlSessionFactory.openSession(false)) {
             SequenceDAO dao = session.getMapper(SequenceDAO.class);
-            return dao.query(tableName);
+            return dao.findByKey(key, tableName);
+        }
+    }
+
+    @Override
+    public List<Sequence> findAll() {
+        try (SqlSession session = sqlSessionFactory.openSession(false)) {
+            SequenceDAO dao = session.getMapper(SequenceDAO.class);
+            return dao.findAll(tableName);
         }
     }
 
@@ -94,7 +101,8 @@ public class JdbcSequenceManagerImpl implements SequenceManager {
     }
 
     protected void validateTableName(String tableName) {
-        Matcher matcher = tableNamePattern.matcher(tableName);
+        Pattern pattern = Pattern.compile("^[a-zA-Z0-9_]+$");
+        Matcher matcher = pattern.matcher(tableName);
         if (!matcher.matches()) {
             throw new InvalidTableException("Invalid table name \"" + tableName + '\"');
         }

@@ -1,10 +1,9 @@
 package io.leego.unique.core.service;
 
-import io.leego.unique.common.Monitor;
 import io.leego.unique.common.Result;
 import io.leego.unique.common.Segment;
-import io.leego.unique.core.dto.SequenceSaveDTO;
-import io.leego.unique.core.dto.SequenceUpdateDTO;
+import io.leego.unique.core.entity.Sequence;
+import io.leego.unique.core.entity.SnapshotSequence;
 
 /**
  * @author Yihleego
@@ -15,14 +14,10 @@ public interface SequenceService {
 
     Result<Segment> next(String key, int size);
 
-    Result<Void> save(SequenceSaveDTO dto);
+    void init();
 
-    Result<Void> update(SequenceUpdateDTO dto);
+    void merge(Sequence sequence);
 
-    Result<Void> delete(String key);
-
-    Result<Void> load();
-
-    Result<Monitor> getMonitor();
+    SnapshotSequence getSnapshot(String key);
 
 }

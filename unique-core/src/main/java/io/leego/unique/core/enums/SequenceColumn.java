@@ -7,42 +7,26 @@ import java.util.Map;
  * @author Yihleego
  */
 public enum SequenceColumn {
-    KEY("key", String.class, "key", "_id"),
-    VALUE("value", Long.class, "value", "value"),
-    INCREMENT("increment", Integer.class, "increment", "increment"),
-    CACHE("cache", Integer.class, "cache", "cache"),
-    VERSION("version", Integer.class, "version", "version");
+    KEY("key", "seq_key", "_id"),
+    VALUE("value", "seq_value", "value"),
+    INCREMENT("increment", "seq_increment", "increment"),
+    CACHE("cache", "seq_cache", "cache"),
+    VERSION("version", "seq_version", "version"),
+    CREATE_TIME("createTime", "seq_create_time", "create_time"),
+    UPDATE_TIME("updateTime", "seq_update_time", "update_time");
 
-    private static final Map<String, SequenceColumn> map = new HashMap<>();
-
-    static {
-        for (SequenceColumn e : values()) {
-            map.put(e.getFieldName(), e);
-        }
-    }
-
-    private final String fieldName;
-    private final Class<?> type;
+    private final String property;
     private final String dbColumn;
     private final String mongoColumn;
 
-    SequenceColumn(String fieldName, Class<?> type, String dbColumn, String mongoColumn) {
-        this.fieldName = fieldName;
-        this.type = type;
+    SequenceColumn(String property, String dbColumn, String mongoColumn) {
+        this.property = property;
         this.dbColumn = dbColumn;
         this.mongoColumn = mongoColumn;
     }
 
-    public static SequenceColumn get(String fieldName) {
-        return fieldName != null ? map.get(fieldName) : null;
-    }
-
-    public String getFieldName() {
-        return fieldName;
-    }
-
-    public Class<?> getType() {
-        return type;
+    public String getProperty() {
+        return property;
     }
 
     public String getDbColumn() {
@@ -51,6 +35,18 @@ public enum SequenceColumn {
 
     public String getMongoColumn() {
         return mongoColumn;
+    }
+
+    private static final Map<String, SequenceColumn> map = new HashMap<>();
+
+    static {
+        for (SequenceColumn e : values()) {
+            map.put(e.getProperty(), e);
+        }
+    }
+
+    public static SequenceColumn get(String property) {
+        return property != null ? map.get(property) : null;
     }
 
 }

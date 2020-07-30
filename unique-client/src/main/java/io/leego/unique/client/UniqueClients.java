@@ -5,6 +5,7 @@ import feign.Request;
 import feign.Retryer;
 import feign.okhttp.OkHttpClient;
 import io.leego.unique.client.codec.ResponseDecoder;
+import io.leego.unique.client.codec.ResponseErrorDecoder;
 import io.leego.unique.client.service.UniqueService;
 import io.leego.unique.client.service.UniqueServiceRequester;
 import io.leego.unique.client.service.impl.RemoteUniqueServiceImpl;
@@ -108,6 +109,7 @@ public final class UniqueClients {
         return Feign.builder()
                 .client(new OkHttpClient())
                 .decoder(new ResponseDecoder())
+                .errorDecoder(new ResponseErrorDecoder())
                 .retryer(Retryer.NEVER_RETRY)
                 .options(options)
                 .target(UniqueServiceRequester.class, url);

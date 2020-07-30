@@ -1,14 +1,13 @@
-package io.leego.unique.core.dto;
+package io.leego.unique.server.console.dto;
 
 import java.io.Serializable;
 
 /**
  * @author Yihleego
  */
-public class SequenceSaveDTO implements Serializable {
-    private static final long serialVersionUID = -7722494547043387459L;
+public class SequenceUpdateDTO implements Serializable {
+    private static final long serialVersionUID = -7602590318738910759L;
     private String key;
-    private Long value;
     private Integer increment;
     private Integer cache;
 
@@ -18,14 +17,6 @@ public class SequenceSaveDTO implements Serializable {
 
     public void setKey(String key) {
         this.key = key;
-    }
-
-    public Long getValue() {
-        return value;
-    }
-
-    public void setValue(Long value) {
-        this.value = value;
     }
 
     public Integer getIncrement() {
@@ -43,5 +34,4 @@ public class SequenceSaveDTO implements Serializable {
     public void setCache(Integer cache) {
         this.cache = cache;
     }
-
 }

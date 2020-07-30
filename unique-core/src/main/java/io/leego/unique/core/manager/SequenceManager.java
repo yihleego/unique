@@ -1,6 +1,5 @@
 package io.leego.unique.core.manager;
 
-
 import io.leego.unique.core.entity.Sequence;
 
 import java.util.List;
@@ -10,7 +9,9 @@ import java.util.List;
  */
 public interface SequenceManager {
 
-    List<Sequence> query();
+    Sequence findByKey(String key);
+
+    List<Sequence> findAll();
 
     int updateValue(String key, long value);
 

@@ -1,44 +1,52 @@
 <!DOCTYPE html>
-<html lang='zh-CN'>
+<html>
 <head>
     <title>Unique Sequence Console</title>
     <meta charset='UTF-8'>
     <meta content='Unique Sequence Console' name='description'>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
-    <link rel="stylesheet" href="styles/vuetify.min.css" type="text/css">
+    <link href="styles/vuetify.min.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 <main id='app'>
-    <div v-for="seq in monitor.sequences">
+    <div v-for="seq in sequences">
         <div>key: {{seq.key}}</div>
-        <div>current: {{seq.cur}}</div>
-        <div>maximum: {{seq.max}}</div>
+        <div>value: {{seq.value}}</div>
         <div>increment: {{seq.increment}}</div>
         <div>cache-size: {{seq.cache}}</div>
         <div>version: {{seq.version}}</div>
+        <div>create time: {{seq.createTime}}</div>
+        <div>update time: {{seq.updateTime}}</div>
     </div>
 </main>
 <script src='scripts/vue.min.js'></script>
 <script src='scripts/vue-router.min.js'></script>
+<script src='scripts/vue-i18n.min.js'></script>
 <script src="scripts/vuetify.min.js"></script>
 <script src='scripts/axios.min.js'></script>
 <script>
     const api = {
         console: {
-            getMonitor(params, callback) {
-                $get(`/consoles/monitors`, params, callback);
-            },
-            loadConfiguration(params, callback) {
-                $patch(`/consoles/configurations`, params, callback);
-            },
-            saveSequence(params, callback) {
+            save(params, callback) {
                 $post(`/consoles/sequences`, params, callback);
             },
-            updateSequence(params, callback) {
+            update(params, callback) {
                 $put(`/consoles/sequences/${params.key}`, params, callback);
             },
-            deleteSequence(params, callback) {
+            delete(params, callback) {
                 $delete(`/consoles/sequences/${params.key}`, params, callback);
+            },
+            list(params, callback) {
+                $get(`/consoles/sequences`, params, callback);
+            },
+            getSnapshot(params, callback) {
+                $get(`/consoles/sequences/${params.key}/snapshot`, params, callback);
+            },
+            skip(params, callback) {
+                $patch(`/consoles/sequences/${params.key}/skip/${params.size}`, params, callback);
+            },
+            load(params, callback) {
+                $put(`/consoles/configurations/${params.key}`, params, callback);
             },
         },
     };
@@ -46,20 +54,13 @@
     const vm = new Vue({
         el: '#app',
         data: {
-            monitor: {
-                sequences: [],
-            }
+            sequences: [],
         },
         methods: {
             init() {
-                api.console.getMonitor(null, (result) => {
+                api.console.list(null, (result) => {
                     if (result.success) {
-                        this.monitor = result.data;
-                    }
-                });
-                api.console.loadConfiguration(null, (result) => {
-                    if (result.success) {
-                        console.log(result.message);
+                        this.sequences = result.data.list;
                     }
                 });
             },

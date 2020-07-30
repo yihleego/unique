@@ -1,21 +1,16 @@
 package io.leego.unique.core.service.impl;
 
-import io.leego.unique.common.Monitor;
-import io.leego.unique.common.MonitoredSequence;
 import io.leego.unique.common.Result;
 import io.leego.unique.common.Segment;
 import io.leego.unique.common.util.ErrorCode;
-import io.leego.unique.core.dto.SequenceSaveDTO;
-import io.leego.unique.core.dto.SequenceUpdateDTO;
 import io.leego.unique.core.entity.Sequence;
+import io.leego.unique.core.entity.SnapshotSequence;
 import io.leego.unique.core.manager.SequenceManager;
 import io.leego.unique.core.service.SequenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -25,9 +20,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SequenceServiceImpl implements SequenceService {
     private static final Logger logger = LoggerFactory.getLogger(SequenceServiceImpl.class);
-    private static final int DEFAULT_VERSION = 1;
     private final ConcurrentMap<String, CachedSeq> seqMap = new ConcurrentHashMap<>(32);
     private final SequenceManager sequenceManager;
+    private volatile boolean initialized = false;
 
     public SequenceServiceImpl(SequenceManager sequenceManager) {
         this.sequenceManager = sequenceManager;
@@ -64,63 +59,49 @@ public class SequenceServiceImpl implements SequenceService {
     }
 
     @Override
-    public Result<Void> save(SequenceSaveDTO dto) {
-        Sequence save = new Sequence(dto.getKey(), dto.getValue(), dto.getIncrement(), dto.getCache(), DEFAULT_VERSION);
-        sequenceManager.save(save);
-        return Result.buildSuccess();
-    }
-
-    @Override
-    public Result<Void> update(SequenceUpdateDTO dto) {
-        Sequence update = new Sequence(dto.getKey(), null, dto.getIncrement(), dto.getCache(), null);
-        sequenceManager.update(update);
-        return Result.buildSuccess();
-    }
-
-    @Override
-    public Result<Void> delete(String key) {
-        sequenceManager.delete(key);
-        return Result.buildSuccess();
-    }
-
-    @Override
-    public Result<Void> load() {
+    public void init() {
+        if (initialized) {
+            logger.warn("The service has already been initialized.");
+            return;
+        }
         logger.info("Starting loading data from the database.");
-        for (Sequence sequence : sequenceManager.query()) {
-            CachedSeq o = seqMap.computeIfAbsent(sequence.getKey(), key -> {
-                logger.debug("The sequence \"{}\" has been loaded.", key);
-                return new CachedSeq(key, sequence.getValue(), sequence.getIncrement(), sequence.getCache(), sequence.getVersion());
-            });
-            if (sequence.getVersion() != o.getVersion()) {
-                logger.debug("The sequence \"{}\" has been modified.", sequence.getKey());
-                o.update(sequence.getIncrement(), sequence.getCache(), sequence.getVersion());
-            }
-        }
+        sequenceManager.findAll().forEach(this::merge);
+        initialized = true;
         logger.info("Finished loading data from the database.");
-        return Result.buildSuccess();
     }
 
     @Override
-    public Result<Monitor> getMonitor() {
-        if (seqMap.isEmpty()) {
-            return Result.buildSuccess(Monitor.empty());
+    public void merge(final Sequence sequence) {
+        if (sequence == null) {
+            return;
         }
-        Set<String> keys = seqMap.keySet();
-        List<MonitoredSequence> sequences = new ArrayList<>(keys.size());
-        for (String key : keys) {
-            CachedSeq cached = seqMap.get(key);
-            if (cached == null) {
-                continue;
-            }
-            sequences.add(new MonitoredSequence(
-                    cached.getKey(),
-                    cached.getCur().get(),
-                    cached.getMax().get(),
-                    cached.getIncrement(),
-                    cached.getCache(),
-                    cached.getVersion()));
+        CachedSeq cached = seqMap.computeIfAbsent(sequence.getKey(), key -> {
+            logger.debug("The sequence \"{}\" has been loaded.", key);
+            return new CachedSeq(key, sequence.getValue(), sequence.getIncrement(), sequence.getCache(), sequence.getVersion());
+        });
+        if (sequence.getVersion() != cached.getVersion()) {
+            logger.debug("The sequence \"{}\" has been modified.", sequence.getKey());
+            cached.update(sequence.getIncrement(), sequence.getCache(), sequence.getVersion());
         }
-        return Result.buildSuccess(new Monitor(sequences));
+    }
+
+    @Override
+    public SnapshotSequence getSnapshot(String key) {
+        if (key == null) {
+            return null;
+        }
+        CachedSeq cached = seqMap.get(key);
+        if (cached == null) {
+            return null;
+        }
+        return new SnapshotSequence(
+                cached.getKey(),
+                cached.getCur().get(),
+                cached.getMax().get(),
+                cached.getIncrement(),
+                cached.getCache(),
+                cached.getVersion(),
+                LocalDateTime.now());
     }
 
     private void check(final String key, final CachedSeq seq) {
@@ -138,7 +119,7 @@ public class SequenceServiceImpl implements SequenceService {
         }
     }
 
-    private static final class CachedSeq {
+    protected static final class CachedSeq {
         private final String key;
         private final AtomicLong cur;
         private final AtomicLong max;
@@ -157,7 +138,7 @@ public class SequenceServiceImpl implements SequenceService {
             this.version = version;
         }
 
-        public CachedSeq update(int increment, int cache, int version) {
+        public void update(int increment, int cache, int version) {
             this.version = version;
             if (this.increment != increment) {
                 this.increment = increment;
@@ -169,7 +150,6 @@ public class SequenceServiceImpl implements SequenceService {
             if (this.step != step) {
                 this.step = step;
             }
-            return this;
         }
 
         public String getKey() {

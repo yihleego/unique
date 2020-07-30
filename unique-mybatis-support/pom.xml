@@ -18,6 +18,7 @@
         <dependency>
             <groupId>io.leego</groupId>
             <artifactId>unique-client</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.mybatis</groupId>
