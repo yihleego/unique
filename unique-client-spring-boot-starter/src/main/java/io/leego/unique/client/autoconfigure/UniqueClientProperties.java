@@ -1,22 +1,28 @@
 package io.leego.unique.client.autoconfigure;
 
-import io.leego.unique.client.UniqueClientConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.time.Duration;
 
 /**
+ * Configuration properties for unique-client.
  * @author Yihleego
  */
 @ConfigurationProperties("spring.unique")
 public class UniqueClientProperties {
+    /** Whether to enable auto-configure. */
     private boolean enabled = true;
+    /** The absolute URL or resolvable hostname (the protocol is optional). */
     private String uri;
+    /** The name of the service with optional protocol prefix. */
     private String serviceId;
-    private Duration timeout = UniqueClientConstants.TIMEOUT;
+    /** Request timeout. */
+    private Duration timeout;
     @NestedConfigurationProperty
     private Cache cache = new Cache();
+    @NestedConfigurationProperty
+    private Hystrix hystrix = new Hystrix();
     @NestedConfigurationProperty
     private Mybatis mybatis = new Mybatis();
 
@@ -60,6 +66,14 @@ public class UniqueClientProperties {
         this.cache = cache;
     }
 
+    public Hystrix getHystrix() {
+        return hystrix;
+    }
+
+    public void setHystrix(Hystrix hystrix) {
+        this.hystrix = hystrix;
+    }
+
     public Mybatis getMybatis() {
         return mybatis;
     }
@@ -81,6 +95,7 @@ public class UniqueClientProperties {
         }
 
         public static class Plugin {
+            /** Whether to enable mybatis-plugin. */
             private boolean enabled = false;
 
             public boolean isEnabled() {
@@ -93,9 +108,24 @@ public class UniqueClientProperties {
         }
     }
 
-    protected static class Cache {
+    protected static class Hystrix {
+        /** Whether to enable Hystrix. */
         private boolean enabled = false;
-        private Integer size = UniqueClientConstants.CACHE_SIZE;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+    }
+
+    protected static class Cache {
+        /** Whether to enable Cache. */
+        private boolean enabled = false;
+        /** Cache size. */
+        private Integer size;
 
         public boolean isEnabled() {
             return enabled;

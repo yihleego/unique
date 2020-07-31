@@ -10,6 +10,7 @@ import io.leego.unique.server.console.dto.SequenceSearchDTO;
 import io.leego.unique.server.console.dto.SequenceUpdateDTO;
 import io.leego.unique.server.console.service.ConsoleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,12 +31,12 @@ public class ConsoleController {
     private ConsoleService consoleService;
 
     @PostMapping("sequences")
-    public Result<Void> save(@RequestBody SequenceSaveDTO dto) {
+    public Result<Void> save(@RequestBody @Validated SequenceSaveDTO dto) {
         return consoleService.save(dto);
     }
 
     @PutMapping("sequences/{key}")
-    public Result<Void> update(@PathVariable String key, @RequestBody SequenceUpdateDTO dto) {
+    public Result<Void> update(@PathVariable String key, @RequestBody @Validated SequenceUpdateDTO dto) {
         dto.setKey(key);
         return consoleService.update(dto);
     }

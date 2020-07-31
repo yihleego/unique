@@ -52,13 +52,13 @@ import java.time.format.DateTimeFormatter;
  * @author Yihleego
  */
 @Configuration
-@ComponentScan(basePackages = "io.leego.unique.server")
+@ComponentScan(basePackages = "io.leego.unique.server.controller")
 @EnableConfigurationProperties(UniqueServerProperties.class)
 public class UniqueAutoConfiguration {
 
     @Bean
     @Primary
-    @ConditionalOnMissingBean(ObjectMapper.class)
+    @ConditionalOnMissingBean
     public ObjectMapper objectMapper() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DatePattern.DATE_TIME);
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DatePattern.DATE);
@@ -82,7 +82,7 @@ public class UniqueAutoConfiguration {
 
     @Bean
     @ConditionalOnBean(SequenceManager.class)
-    @ConditionalOnMissingBean(SequenceService.class)
+    @ConditionalOnMissingBean
     public SequenceService sequenceService(SequenceManager sequenceManager) {
         SequenceService sequenceService = new SequenceServiceImpl(sequenceManager);
         sequenceService.init();
@@ -95,7 +95,7 @@ public class UniqueAutoConfiguration {
     protected static class UniqueJdbcAutoConfiguration {
 
         @Bean
-        @ConditionalOnMissingBean(DataSource.class)
+        @ConditionalOnMissingBean
         public DataSource dataSource(UniqueServerProperties properties) {
             HikariConfig config = new HikariConfig();
             config.setDriverClassName(properties.getJdbc().getDriverClassName());
@@ -107,7 +107,7 @@ public class UniqueAutoConfiguration {
 
         @Bean
         @ConditionalOnBean(DataSource.class)
-        @ConditionalOnMissingBean(SequenceManager.class)
+        @ConditionalOnMissingBean
         public SequenceManager jdbcSequenceManager(DataSource dataSource, UniqueServerProperties properties) {
             return new JdbcSequenceManagerImpl(
                     dataSource,
@@ -123,7 +123,7 @@ public class UniqueAutoConfiguration {
     protected static class UniqueMongoAutoConfiguration {
 
         @Bean
-        @ConditionalOnMissingBean(MongoClient.class)
+        @ConditionalOnMissingBean
         public MongoClient mongoClient(UniqueServerProperties properties) {
             String uri = properties.getMongodb().getUri();
             String username = properties.getMongodb().getUsername();
@@ -143,7 +143,7 @@ public class UniqueAutoConfiguration {
 
         @Bean
         @ConditionalOnBean(MongoClient.class)
-        @ConditionalOnMissingBean(SequenceManager.class)
+        @ConditionalOnMissingBean
         public SequenceManager mongoSequenceManager(MongoClient mongoClient, UniqueServerProperties properties) {
             return new MongoSequenceManagerImpl(
                     mongoClient,
@@ -154,12 +154,14 @@ public class UniqueAutoConfiguration {
     }
 
     @Configuration
+    @ComponentScan(basePackages = "io.leego.unique.server.console")
     @ConditionalOnClass(ConsoleService.class)
+    @ConditionalOnProperty(value = "spring.unique.console.enabled", matchIfMissing = true)
     @AutoConfigureAfter({UniqueJdbcAutoConfiguration.class, UniqueMongoAutoConfiguration.class})
     protected static class UniqueConsoleAutoConfiguration {
 
         @Bean
-        @ConditionalOnMissingBean(ConsoleService.class)
+        @ConditionalOnMissingBean
         public ConsoleService consoleService(SequenceManager sequenceManager, SequenceService sequenceService) {
             return new ConsoleServiceImpl(sequenceManager, sequenceService);
         }

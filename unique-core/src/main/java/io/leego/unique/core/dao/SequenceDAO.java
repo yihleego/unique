@@ -1,5 +1,6 @@
 package io.leego.unique.core.dao;
 
+import io.leego.unique.core.constant.Constants;
 import io.leego.unique.core.entity.Sequence;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
@@ -19,24 +20,24 @@ public interface SequenceDAO {
 
     @Select("select * from ${table} where seq_key = #{key}")
     @Results(value = {
-            @Result(column = "seq_key", property = "key", javaType = String.class),
-            @Result(column = "seq_value", property = "value", javaType = Long.class),
-            @Result(column = "seq_increment", property = "increment", javaType = Integer.class),
-            @Result(column = "seq_cache", property = "cache", javaType = Integer.class),
-            @Result(column = "seq_version", property = "version", javaType = Integer.class),
-            @Result(column = "seq_create_time", property = "createTime", javaType = LocalDateTime.class),
-            @Result(column = "seq_update_time", property = "updateTime", javaType = LocalDateTime.class)})
+            @Result(column = Constants.Jdbc.KEY, property = Constants.Property.KEY, javaType = String.class),
+            @Result(column = Constants.Jdbc.VALUE, property = Constants.Property.VALUE, javaType = Long.class),
+            @Result(column = Constants.Jdbc.INCREMENT, property = Constants.Property.INCREMENT, javaType = Integer.class),
+            @Result(column = Constants.Jdbc.CACHE, property = Constants.Property.CACHE, javaType = Integer.class),
+            @Result(column = Constants.Jdbc.VERSION, property = Constants.Property.VERSION, javaType = Integer.class),
+            @Result(column = Constants.Jdbc.CREATE_TIME, property = Constants.Property.CREATE_TIME, javaType = LocalDateTime.class),
+            @Result(column = Constants.Jdbc.UPDATE_TIME, property = Constants.Property.UPDATE_TIME, javaType = LocalDateTime.class)})
     Sequence findByKey(@Param("key") String key, @Param("table") String table);
 
     @Select("select * from ${table}")
     @Results(value = {
-            @Result(column = "seq_key", property = "key", javaType = String.class),
-            @Result(column = "seq_value", property = "value", javaType = Long.class),
-            @Result(column = "seq_increment", property = "increment", javaType = Integer.class),
-            @Result(column = "seq_cache", property = "cache", javaType = Integer.class),
-            @Result(column = "seq_version", property = "version", javaType = Integer.class),
-            @Result(column = "seq_create_time", property = "createTime", javaType = LocalDateTime.class),
-            @Result(column = "seq_update_time", property = "updateTime", javaType = LocalDateTime.class)})
+            @Result(column = Constants.Jdbc.KEY, property = Constants.Property.KEY, javaType = String.class),
+            @Result(column = Constants.Jdbc.VALUE, property = Constants.Property.VALUE, javaType = Long.class),
+            @Result(column = Constants.Jdbc.INCREMENT, property = Constants.Property.INCREMENT, javaType = Integer.class),
+            @Result(column = Constants.Jdbc.CACHE, property = Constants.Property.CACHE, javaType = Integer.class),
+            @Result(column = Constants.Jdbc.VERSION, property = Constants.Property.VERSION, javaType = Integer.class),
+            @Result(column = Constants.Jdbc.CREATE_TIME, property = Constants.Property.CREATE_TIME, javaType = LocalDateTime.class),
+            @Result(column = Constants.Jdbc.UPDATE_TIME, property = Constants.Property.UPDATE_TIME, javaType = LocalDateTime.class)})
     List<Sequence> findAll(@Param("table") String table);
 
     @Update("update ${table} set seq_value = #{value} where seq_key = #{key} and seq_value < #{value}")

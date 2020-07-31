@@ -21,6 +21,7 @@ public final class UniqueClients {
     private static final String HTTP = "http://";
     private static final String HTTPS = "https://";
     private static final String COLON = ":";
+    private static final Duration TIMEOUT = Duration.ofSeconds(3L);
 
     private UniqueClients() {
     }
@@ -100,23 +101,18 @@ public final class UniqueClients {
 
 
     private static UniqueService newUniqueService(String url, Duration timeout) {
-        Request.Options options = new Request.Options(
-                timeout.toMillis(),
-                TimeUnit.MILLISECONDS,
-                timeout.toMillis(),
-                TimeUnit.MILLISECONDS,
-                true);
+        long t = timeout != null ? timeout.toMillis() : TIMEOUT.toMillis();
         return Feign.builder()
                 .client(new OkHttpClient())
                 .decoder(new ResponseDecoder())
                 .errorDecoder(new ResponseErrorDecoder())
                 .retryer(Retryer.NEVER_RETRY)
-                .options(options)
+                .options(new Request.Options(t, TimeUnit.MILLISECONDS, t, TimeUnit.MILLISECONDS, true))
                 .target(UniqueServiceRequester.class, url);
     }
 
     private static UniqueService newUniqueService(String url) {
-        return newUniqueService(url, UniqueClientConstants.TIMEOUT);
+        return newUniqueService(url, null);
     }
 
     private static UniqueService newUniqueService(String host, Integer port, boolean ssl, Duration timeout) {
@@ -124,7 +120,7 @@ public final class UniqueClients {
     }
 
     private static UniqueService newUniqueService(String host, Integer port, boolean ssl) {
-        return newUniqueService(buildUrl(host, port, ssl), UniqueClientConstants.TIMEOUT);
+        return newUniqueService(buildUrl(host, port, ssl), null);
     }
 
     private static UniqueService newUniqueService(SequenceService sequenceService) {

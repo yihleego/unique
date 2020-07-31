@@ -24,28 +24,30 @@ import java.util.function.Supplier;
  * @author Yihleego
  */
 public class CachedUniqueClient extends AbstractUniqueClient {
+    protected static final int CACHE_SIZE = 1000;
+    protected static final Duration TIMEOUT = Duration.ofSeconds(3L);
+    protected static final float FACTOR = 0.2f;
     protected final ConcurrentMap<String, CachedSeq> seqMap = new ConcurrentHashMap<>(32);
-    protected final ExecutorService executor = Executors.newFixedThreadPool(5, NamedThreadFactory.build("unique", "cache-sync", true));
+    protected final ExecutorService executor = Executors.newFixedThreadPool(5, NamedThreadFactory.build("unique-client", "cache-sync", true));
     protected final UniqueService uniqueService;
     protected final int cacheSize;
     protected final Duration timeout;
     protected final float factor;
 
     public CachedUniqueClient(UniqueService uniqueService) {
-        Objects.requireNonNull(uniqueService);
-        this.uniqueService = uniqueService;
-        this.cacheSize = UniqueClientConstants.CACHE_SIZE;
-        this.timeout = UniqueClientConstants.TIMEOUT;
-        this.factor = UniqueClientConstants.FACTOR;
+        this(uniqueService, CACHE_SIZE, TIMEOUT);
     }
 
-    public CachedUniqueClient(UniqueService uniqueService, int cacheSize, Duration timeout) {
+    public CachedUniqueClient(UniqueService uniqueService, Integer cacheSize) {
+        this(uniqueService, cacheSize, TIMEOUT);
+    }
+
+    public CachedUniqueClient(UniqueService uniqueService, Integer cacheSize, Duration timeout) {
         Objects.requireNonNull(uniqueService);
-        Objects.requireNonNull(timeout);
         this.uniqueService = uniqueService;
-        this.cacheSize = cacheSize;
-        this.timeout = timeout;
-        this.factor = UniqueClientConstants.FACTOR;
+        this.cacheSize = cacheSize != null ? cacheSize : CACHE_SIZE;
+        this.timeout = timeout != null ? timeout : TIMEOUT;
+        this.factor = FACTOR;
     }
 
     public int getCacheSize() {
@@ -105,8 +107,7 @@ public class CachedUniqueClient extends AbstractUniqueClient {
     }
 
     protected CachedSeq getSeq(final String key) {
-        CachedSeq seq = seqMap.computeIfAbsent(key,
-                k -> new CachedSeq(k, cacheSize, factor, timeout.toMillis(), timeout.toMillis()));
+        CachedSeq seq = seqMap.computeIfAbsent(key, k -> new CachedSeq(k, cacheSize, factor, timeout.toMillis(), timeout.toMillis()));
         trySync(seq);
         return seq;
     }

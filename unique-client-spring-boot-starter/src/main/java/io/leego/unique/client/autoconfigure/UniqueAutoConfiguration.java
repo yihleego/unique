@@ -18,7 +18,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
 import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
@@ -32,8 +31,6 @@ import java.util.List;
  * @author Yihleego
  */
 @Configuration
-@EnableHystrix
-@EnableCircuitBreaker
 @EnableFeignClients(basePackages = "io.leego.unique")
 @ComponentScan(basePackages = "io.leego.unique")
 @ConditionalOnProperty(value = "spring.unique.enabled", matchIfMissing = true)
@@ -41,25 +38,33 @@ import java.util.List;
 public class UniqueAutoConfiguration {
 
     @Bean
-    @Scope("prototype")
-    @ConditionalOnMissingBean
-    public Feign.Builder feignHystrixBuilder() {
-        return HystrixFeign.builder();
-    }
-
-    @Bean
     public ResponseErrorDecoder responseErrorDecoder() {
         return new ResponseErrorDecoder();
     }
 
     @Bean
-    @ConditionalOnMissingBean(UniqueClient.class)
+    @ConditionalOnMissingBean
     public UniqueClient uniqueClient(UniqueServiceFeignClient uniqueServiceFeignClient, UniqueClientProperties properties) {
         if (properties.getCache() != null && properties.getCache().isEnabled()) {
             return new CachedUniqueClient(uniqueServiceFeignClient, properties.getCache().getSize(), properties.getTimeout());
         } else {
             return new SimpleUniqueClient(uniqueServiceFeignClient);
         }
+    }
+
+    @Configuration
+    @EnableHystrix
+    @ConditionalOnProperty("spring.unique.hystrix.enabled")
+    @EnableConfigurationProperties(UniqueClientProperties.class)
+    protected static class UniqueHystrixAutoConfiguration {
+
+        @Bean
+        @Scope("prototype")
+        @ConditionalOnMissingBean
+        public Feign.Builder feignHystrixBuilder() {
+            return HystrixFeign.builder();
+        }
+
     }
 
     @Configuration

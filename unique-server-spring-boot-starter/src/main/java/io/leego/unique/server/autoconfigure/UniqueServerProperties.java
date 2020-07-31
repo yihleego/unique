@@ -4,14 +4,26 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
+ * Configuration properties for unique-server.
  * @author Yihleego
  */
 @ConfigurationProperties("spring.unique")
 public class UniqueServerProperties {
+    /** Default table used when the configured table is {@code null}. */
+    public static final String TABLE_NAME = "sequence";
+    /** Default URI used when the configured URI is {@code null}. */
+    public static final String MONGODB_URI = "mongodb://localhost:27017";
+    /** Default database used when the configured database is {@code null}. */
+    public static final String DATABASE_NAME = "unique";
+    /** Default collection used when the configured collection is {@code null}. */
+    public static final String COLLECTION_NAME = "sequence";
+
     @NestedConfigurationProperty
     private Jdbc jdbc = new Jdbc();
     @NestedConfigurationProperty
     private MongoDB mongodb = new MongoDB();
+    @NestedConfigurationProperty
+    private Console console = new Console();
 
     public Jdbc getJdbc() {
         return jdbc;
@@ -29,13 +41,27 @@ public class UniqueServerProperties {
         this.mongodb = mongodb;
     }
 
+    public Console getConsole() {
+        return console;
+    }
+
+    public void setConsole(Console console) {
+        this.console = console;
+    }
+
     protected static class Jdbc {
+        /** Whether to enable JDBC. */
         private boolean enabled = false;
+        /** Fully qualified name of the JDBC driver. */
         private String driverClassName;
+        /** JDBC URL of the database. */
         private String url;
+        /** Login username of the database. */
         private String username;
+        /** Login password of the database. */
         private String password;
-        private String table = UniqueServerConstants.TABLE_NAME;
+        /** Table name. */
+        private String table = TABLE_NAME;
 
         public boolean isEnabled() {
             return enabled;
@@ -87,12 +113,18 @@ public class UniqueServerProperties {
     }
 
     protected static class MongoDB {
+        /** Whether to enable MongoDB. */
         private boolean enabled = false;
-        private String uri = UniqueServerConstants.MONGODB_URI;
+        /** Mongo database URI. */
+        private String uri = MONGODB_URI;
+        /** Login user of the mongo server. */
         private String username;
+        /** Login password of the mongo server. */
         private String password;
-        private String database = UniqueServerConstants.DATABASE_NAME;
-        private String collection = UniqueServerConstants.COLLECTION_NAME;
+        /** Database name. */
+        private String database = DATABASE_NAME;
+        /** Collection name. */
+        private String collection = COLLECTION_NAME;
 
         public boolean isEnabled() {
             return enabled;
@@ -144,7 +176,8 @@ public class UniqueServerProperties {
     }
 
     protected static class Console {
-        private boolean enabled = false;
+        /** Whether to enable Console. */
+        private boolean enabled = true;
 
         public boolean isEnabled() {
             return enabled;

@@ -4,6 +4,8 @@ import io.leego.unique.common.Result;
 import io.leego.unique.common.util.ErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -14,11 +16,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class UniqueControllerAdvice {
     private static final Logger logger = LoggerFactory.getLogger(UniqueControllerAdvice.class);
 
-    /**
-     * Catches exceptions
-     * @param e Exception
-     * @return {@link Result}
-     */
+    @ExceptionHandler
+    public Result<Void> catchNotValidException(MethodArgumentNotValidException e) {
+        FieldError error = e.getBindingResult().getFieldError();
+        return Result.buildFailure(ErrorCode.ERROR, error != null ? error.getDefaultMessage() : e.getMessage());
+    }
+
     @ExceptionHandler
     public Result<Void> catchAllException(Exception e) {
         logger.error("", e);
