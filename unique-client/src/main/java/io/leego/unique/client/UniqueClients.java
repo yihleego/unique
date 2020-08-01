@@ -8,8 +8,6 @@ import io.leego.unique.client.codec.ResponseDecoder;
 import io.leego.unique.client.codec.ResponseErrorDecoder;
 import io.leego.unique.client.service.UniqueService;
 import io.leego.unique.client.service.UniqueServiceRequester;
-import io.leego.unique.client.service.impl.RemoteUniqueServiceImpl;
-import io.leego.unique.core.service.SequenceService;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -18,117 +16,134 @@ import java.util.concurrent.TimeUnit;
  * @author Yihleego
  */
 public final class UniqueClients {
-    private static final String HTTP = "http://";
-    private static final String HTTPS = "https://";
-    private static final String COLON = ":";
-    private static final Duration TIMEOUT = Duration.ofSeconds(3L);
-
     private UniqueClients() {
     }
 
+    /**
+     * Creates a {@link SimpleUniqueClient}.
+     **/
     public static UniqueClient newSimple(UniqueService uniqueService) {
         return new SimpleUniqueClient(uniqueService);
     }
 
-    public static UniqueClient newSimple(SequenceService sequenceService) {
-        return new SimpleUniqueClient(newUniqueService(sequenceService));
-    }
-
-    public static UniqueClient newSimple(String url) {
-        return new SimpleUniqueClient(newUniqueService(url));
-    }
-
-    public static UniqueClient newSimple(String host, Integer port) {
-        return new SimpleUniqueClient(newUniqueService(host, port, false));
-    }
-
-    public static UniqueClient newSimple(String host, Integer port, boolean ssl) {
-        return new SimpleUniqueClient(newUniqueService(host, port, ssl));
-    }
-
-    public static UniqueClient newSimple(String url, Duration timeout) {
-        return new SimpleUniqueClient(newUniqueService(url, timeout));
-    }
-
-    public static UniqueClient newSimple(String host, Integer port, Duration timeout) {
-        return new SimpleUniqueClient(newUniqueService(host, port, false, timeout));
-    }
-
-    public static UniqueClient newSimple(String host, Integer port, boolean ssl, Duration timeout) {
-        return new SimpleUniqueClient(newUniqueService(host, port, ssl, timeout));
-    }
-
-
+    /**
+     * Creates a {@link CachedUniqueClient} that caches a fixed number of sequences.
+     **/
     public static UniqueClient newCached(UniqueService uniqueService) {
         return new CachedUniqueClient(uniqueService);
     }
 
+    /**
+     * Creates a {@link CachedUniqueClient} that caches a fixed number of sequences.
+     **/
+    public static UniqueClient newCached(UniqueService uniqueService, Integer cacheSize) {
+        return new CachedUniqueClient(uniqueService, cacheSize);
+    }
+
+    /**
+     * Creates a {@link CachedUniqueClient} that caches a fixed number of sequences.
+     **/
     public static UniqueClient newCached(UniqueService uniqueService, Integer cacheSize, Duration timeout) {
         return new CachedUniqueClient(uniqueService, cacheSize, timeout);
     }
 
-    public static UniqueClient newCached(SequenceService sequenceService) {
-        return new CachedUniqueClient(newUniqueService(sequenceService));
+    /**
+     * Convenience method to create a Builder.
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public static UniqueClient newCached(SequenceService sequenceService, Integer cacheSize, Duration timeout) {
-        return new CachedUniqueClient(newUniqueService(sequenceService), cacheSize, timeout);
-    }
+    public static final class Builder {
+        private static final String HTTP = "http://";
+        private static final String HTTPS = "https://";
+        private static final String COLON = ":";
+        /** Default URL used when the configured URL is {@code null}. */
+        private static final String URL = "http://localhost";
+        /** Default host used when the configured host is {@code null}. */
+        private static final String HOST = "localhost";
+        /** Default port used when the configured port is {@code null}. */
+        private static final Integer PORT = 80;
+        /** Default timeout used when the configured timeout is {@code null}. */
+        private static final Duration TIMEOUT = Duration.ofSeconds(3L);
+        /** Request URL. Cannot be set with {@link #host}, {@link #port}, {@link #ssl}. */
+        private String url = URL;
+        /** Server host. Cannot be set with {@link #url}. */
+        private String host = HOST;
+        /** Server port. Cannot be set with {@link #url}. */
+        private Integer port = PORT;
+        /** Whether to enable SSL. Cannot be set with {@link #url}. */
+        private boolean ssl = false;
+        /** Request timeout. */
+        private Duration timeout = TIMEOUT;
+        /** Whether to enable caching. */
+        private boolean cached = false;
+        /** Cache size. */
+        private Integer cacheSize;
 
-    public static UniqueClient newCached(String url) {
-        return new CachedUniqueClient(newUniqueService(url));
-    }
+        public Builder url(String url) {
+            this.url = url;
+            return this;
+        }
 
-    public static UniqueClient newCached(String host, Integer port) {
-        return new CachedUniqueClient(newUniqueService(host, port, false));
-    }
+        public Builder host(String host) {
+            this.host = host;
+            return this;
+        }
 
-    public static UniqueClient newCached(String host, Integer port, boolean ssl) {
-        return new CachedUniqueClient(newUniqueService(host, port, ssl));
-    }
+        public Builder port(Integer port) {
+            this.port = port;
+            return this;
+        }
 
-    public static UniqueClient newCached(String url, Integer cacheSize, Duration timeout) {
-        return new CachedUniqueClient(newUniqueService(url, timeout), cacheSize, timeout);
-    }
+        public Builder ssl(boolean ssl) {
+            this.ssl = ssl;
+            return this;
+        }
 
-    public static UniqueClient newCached(String host, Integer port, Integer cacheSize, Duration timeout) {
-        return new CachedUniqueClient(newUniqueService(host, port, false, timeout), cacheSize, timeout);
-    }
+        public Builder timeout(Duration timeout) {
+            this.timeout = timeout;
+            return this;
+        }
 
-    public static UniqueClient newCached(String host, Integer port, boolean ssl, Integer cacheSize, Duration timeout) {
-        return new CachedUniqueClient(newUniqueService(host, port, ssl, timeout), cacheSize, timeout);
-    }
+        public Builder cached(boolean cached) {
+            this.cached = cached;
+            return this;
+        }
 
+        public Builder cacheSize(Integer cacheSize) {
+            this.cacheSize = cacheSize;
+            return this;
+        }
 
-    private static UniqueService newUniqueService(String url, Duration timeout) {
-        long t = timeout != null ? timeout.toMillis() : TIMEOUT.toMillis();
-        return Feign.builder()
-                .client(new OkHttpClient())
-                .decoder(new ResponseDecoder())
-                .errorDecoder(new ResponseErrorDecoder())
-                .retryer(Retryer.NEVER_RETRY)
-                .options(new Request.Options(t, TimeUnit.MILLISECONDS, t, TimeUnit.MILLISECONDS, true))
-                .target(UniqueServiceRequester.class, url);
-    }
+        public UniqueClient build() {
+            if (this.url == null && host == null) {
+                throw new IllegalArgumentException("Url or host cannot be empty");
+            }
+            String targetUrl = this.url != null
+                    ? this.url
+                    : (ssl ? HTTPS : HTTP) + host + COLON + (port != null && port > 0 ? port : PORT);
+            Duration timeout = this.timeout != null ? this.timeout : TIMEOUT;
+            Request.Options options = new Request.Options(
+                    timeout.toMillis(),
+                    TimeUnit.MILLISECONDS,
+                    timeout.toMillis(),
+                    TimeUnit.MILLISECONDS,
+                    true);
+            UniqueService uniqueService = Feign.builder()
+                    .client(new OkHttpClient())
+                    .decoder(new ResponseDecoder())
+                    .errorDecoder(new ResponseErrorDecoder())
+                    .retryer(Retryer.NEVER_RETRY)
+                    .options(options)
+                    .target(UniqueServiceRequester.class, targetUrl);
+            if (cached) {
+                return new CachedUniqueClient(uniqueService, cacheSize, timeout);
+            } else {
+                return new SimpleUniqueClient(uniqueService);
+            }
+        }
 
-    private static UniqueService newUniqueService(String url) {
-        return newUniqueService(url, null);
-    }
-
-    private static UniqueService newUniqueService(String host, Integer port, boolean ssl, Duration timeout) {
-        return newUniqueService(buildUrl(host, port, ssl), timeout);
-    }
-
-    private static UniqueService newUniqueService(String host, Integer port, boolean ssl) {
-        return newUniqueService(buildUrl(host, port, ssl), null);
-    }
-
-    private static UniqueService newUniqueService(SequenceService sequenceService) {
-        return new RemoteUniqueServiceImpl(sequenceService);
-    }
-
-    private static String buildUrl(String host, Integer port, boolean ssl) {
-        return (ssl ? HTTPS : HTTP) + host + COLON + port;
     }
 
 }

@@ -45,10 +45,10 @@
         <module>unique-common</module>
         <module>unique-client</module>
         <module>unique-client-spring-boot-starter</module>
-        <module>unique-mybatis-support</module>
         <module>unique-core</module>
-        <module>unique-server-console</module>
         <module>unique-server-spring-boot-starter</module>
+        <module>unique-server-console</module>
+        <module>unique-mybatis-support</module>
     </modules>
 
     <properties>
@@ -128,12 +128,12 @@
             </dependency>
             <dependency>
                 <groupId>io.leego</groupId>
-                <artifactId>unique-mybatis-support</artifactId>
+                <artifactId>unique-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.leego</groupId>
-                <artifactId>unique-core</artifactId>
+                <artifactId>unique-server-spring-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -143,7 +143,7 @@
             </dependency>
             <dependency>
                 <groupId>io.leego</groupId>
-                <artifactId>unique-server-spring-boot-starter</artifactId>
+                <artifactId>unique-mybatis-support</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
