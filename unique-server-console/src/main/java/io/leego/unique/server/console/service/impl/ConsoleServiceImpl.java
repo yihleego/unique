@@ -52,6 +52,11 @@ public class ConsoleServiceImpl implements ConsoleService {
     }
 
     @Override
+    public Result<Sequence> get(String key) {
+        return Result.buildSuccess(sequenceManager.findByKey(key));
+    }
+
+    @Override
     public Result<SnapshotSequence> getSnapshot(String key) {
         return Result.buildSuccess(sequenceService.getSnapshot(key));
     }

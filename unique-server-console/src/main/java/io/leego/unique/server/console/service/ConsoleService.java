@@ -22,6 +22,8 @@ public interface ConsoleService {
 
     Result<Page<Sequence>> list(SequenceSearchDTO dto);
 
+    Result<Sequence> get(String key);
+
     Result<SnapshotSequence> getSnapshot(String key);
 
     Result<Segment> skip(String key, int size);

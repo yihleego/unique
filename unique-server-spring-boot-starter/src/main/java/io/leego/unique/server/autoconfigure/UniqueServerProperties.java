@@ -177,7 +177,7 @@ public class UniqueServerProperties {
 
     protected static class Console {
         /** Whether to enable Console. */
-        private boolean enabled = true;
+        private boolean enabled = false;
 
         public boolean isEnabled() {
             return enabled;

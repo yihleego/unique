@@ -51,6 +51,11 @@ public class ConsoleController {
         return consoleService.list(dto);
     }
 
+    @GetMapping("sequences/{key}")
+    public Result<Sequence> get(@PathVariable String key) {
+        return consoleService.get(key);
+    }
+
     @GetMapping("sequences/{key}/snapshot")
     public Result<SnapshotSequence> getSnapshot(@PathVariable String key) {
         return consoleService.getSnapshot(key);
