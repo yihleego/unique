@@ -49,6 +49,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 /**
+ * Auto configuration for unique-core.
  * @author Yihleego
  */
 @Configuration

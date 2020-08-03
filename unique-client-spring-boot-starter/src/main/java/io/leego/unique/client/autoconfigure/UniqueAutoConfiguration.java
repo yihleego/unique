@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Scope;
 import java.util.List;
 
 /**
+ * Auto configuration for unique-client.
  * @author Yihleego
  */
 @Configuration

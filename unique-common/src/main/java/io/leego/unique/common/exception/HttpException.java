@@ -1,4 +1,4 @@
-package io.leego.unique.common.exception.http;
+package io.leego.unique.common.exception;
 
 import io.leego.unique.common.enums.HttpStatus;
 

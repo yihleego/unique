@@ -13,7 +13,7 @@ import feign.Response;
 import feign.codec.DecodeException;
 import feign.codec.Decoder;
 import io.leego.unique.common.enums.HttpStatus;
-import io.leego.unique.common.exception.http.HttpException;
+import io.leego.unique.common.exception.HttpException;
 
 import java.io.IOException;
 import java.io.InputStream;

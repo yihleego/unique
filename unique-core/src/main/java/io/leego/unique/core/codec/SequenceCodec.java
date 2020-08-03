@@ -19,6 +19,12 @@ import java.time.ZoneId;
  */
 public class SequenceCodec implements Codec<Sequence> {
 
+    /**
+     * Decodes a BSON value from the given reader into an instance of the type parameter {@link Sequence}.
+     * @param reader         the BSON reader
+     * @param decoderContext the decoder context
+     * @return an instance of the type parameter {@link Sequence}.
+     */
     @Override
     public Sequence decode(BsonReader reader, DecoderContext decoderContext) {
         Sequence user = new Sequence();
@@ -47,29 +53,35 @@ public class SequenceCodec implements Codec<Sequence> {
         return user;
     }
 
+    /**
+     * Encode an instance of the type parameter {@link Sequence} into a BSON value.
+     * @param writer         the BSON writer to encode into
+     * @param value          the value to encode
+     * @param encoderContext the encoder context
+     */
     @Override
-    public void encode(BsonWriter writer, Sequence sequence, EncoderContext encoderContext) {
+    public void encode(BsonWriter writer, Sequence value, EncoderContext encoderContext) {
         writer.writeStartDocument();
-        if (sequence.getKey() != null) {
-            writer.writeString(Constants.Mongo.KEY, sequence.getKey());
+        if (value.getKey() != null) {
+            writer.writeString(Constants.Mongo.KEY, value.getKey());
         }
-        if (sequence.getValue() != null) {
-            writer.writeInt64(Constants.Mongo.VALUE, sequence.getValue());
+        if (value.getValue() != null) {
+            writer.writeInt64(Constants.Mongo.VALUE, value.getValue());
         }
-        if (sequence.getIncrement() != null) {
-            writer.writeInt32(Constants.Mongo.INCREMENT, sequence.getIncrement());
+        if (value.getIncrement() != null) {
+            writer.writeInt32(Constants.Mongo.INCREMENT, value.getIncrement());
         }
-        if (sequence.getCache() != null) {
-            writer.writeInt32(Constants.Mongo.CACHE, sequence.getCache());
+        if (value.getCache() != null) {
+            writer.writeInt32(Constants.Mongo.CACHE, value.getCache());
         }
-        if (sequence.getVersion() != null) {
-            writer.writeInt32(Constants.Mongo.VERSION, sequence.getVersion());
+        if (value.getVersion() != null) {
+            writer.writeInt32(Constants.Mongo.VERSION, value.getVersion());
         }
-        if (sequence.getCreateTime() != null) {
-            writer.writeDateTime(Constants.Mongo.CREATE_TIME, toTimestamp(sequence.getCreateTime()));
+        if (value.getCreateTime() != null) {
+            writer.writeDateTime(Constants.Mongo.CREATE_TIME, toTimestamp(value.getCreateTime()));
         }
-        if (sequence.getUpdateTime() != null) {
-            writer.writeDateTime(Constants.Mongo.UPDATE_TIME, toTimestamp(sequence.getUpdateTime()));
+        if (value.getUpdateTime() != null) {
+            writer.writeDateTime(Constants.Mongo.UPDATE_TIME, toTimestamp(value.getUpdateTime()));
         }
         writer.writeEndDocument();
     }

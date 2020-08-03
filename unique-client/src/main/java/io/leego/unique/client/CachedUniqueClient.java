@@ -3,9 +3,9 @@ package io.leego.unique.client;
 import io.leego.unique.client.service.UniqueService;
 import io.leego.unique.common.Result;
 import io.leego.unique.common.Segment;
-import io.leego.unique.common.exception.KeyNotFoundException;
 import io.leego.unique.common.exception.ObtainErrorException;
 import io.leego.unique.common.exception.ObtainTimeoutException;
+import io.leego.unique.common.exception.SequenceNotFoundException;
 import io.leego.unique.common.util.NamedThreadFactory;
 
 import java.time.Duration;
@@ -69,7 +69,7 @@ public class CachedUniqueClient extends AbstractUniqueClient {
                 if (seq.isPresent()) {
                     throw new ObtainTimeoutException("Obtain values timeout");
                 } else {
-                    throw new KeyNotFoundException("The sequence named \"" + key + "\" was not found");
+                    throw new SequenceNotFoundException("The sequence named \"" + key + "\" was not found");
                 }
             }
         } catch (InterruptedException e) {
@@ -96,7 +96,7 @@ public class CachedUniqueClient extends AbstractUniqueClient {
                     if (seq.isPresent()) {
                         throw new ObtainTimeoutException("Obtain values timeout");
                     } else {
-                        throw new KeyNotFoundException("The sequence named \"" + key + "\" was not found");
+                        throw new SequenceNotFoundException("The sequence named \"" + key + "\" was not found");
                     }
                 }
             }

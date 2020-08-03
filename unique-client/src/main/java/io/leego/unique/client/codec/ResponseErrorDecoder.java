@@ -3,7 +3,7 @@ package io.leego.unique.client.codec;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 import io.leego.unique.common.enums.HttpStatus;
-import io.leego.unique.common.exception.http.HttpException;
+import io.leego.unique.common.exception.HttpException;
 
 /**
  * @author Yihleego
