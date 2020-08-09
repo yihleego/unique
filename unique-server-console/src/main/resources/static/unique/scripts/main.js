@@ -512,9 +512,6 @@ const monitor = {
             });
         },
         get(key) {
-            this.snackbar = true;
-            this.message = "123";
-            return;
             let sequence = this.getByKey(key);
             if (!sequence) {
                 return;
