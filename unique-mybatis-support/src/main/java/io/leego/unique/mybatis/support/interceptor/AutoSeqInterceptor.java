@@ -15,7 +15,14 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * @author Yihleego
@@ -31,38 +38,10 @@ public class AutoSeqInterceptor implements Interceptor {
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
         Object[] args = invocation.getArgs();
-        if (args == null || args.length < 2) {
+        if (args == null || args.length < 2 || args[1] == null) {
             return invocation.proceed();
         }
-        Object parameter = args[1];
-        AutoSeq tas = parameter.getClass().getAnnotation(AutoSeq.class);
-        if (tas != null) {
-            String key = getAlias(tas.value(), tas.key());
-            if (hasLength(key) && hasLength(tas.field())) {
-                Field field = ReflectUtils.getDeepField(parameter, tas.field());
-                boolean flag = setSeqValue(key, field, parameter);
-                if (flag) {
-                    return invocation.proceed();
-                }
-            }
-        }
-        Field[] fields = ReflectUtils.getDeepFields(parameter, true);
-        for (Field field : fields) {
-            Annotation[] annotations = field.getDeclaredAnnotations();
-            if (annotations.length == 0) {
-                continue;
-            }
-            for (Annotation annotation : annotations) {
-                if (annotation instanceof AutoSeq) {
-                    AutoSeq fas = (AutoSeq) annotation;
-                    String key = getAlias(fas.value(), fas.key());
-                    if (hasLength(key)) {
-                        setSeqValue(key, field, parameter);
-                    }
-                    return invocation.proceed();
-                }
-            }
-        }
+        handle(args[1]);
         return invocation.proceed();
     }
 
@@ -76,38 +55,131 @@ public class AutoSeqInterceptor implements Interceptor {
         // ignored
     }
 
-    private boolean setSeqValue(String key, Field field, Object parameter) throws IllegalAccessException {
-        if (field == null) {
-            return true;
-        }
-        field.setAccessible(true);
-        Object value = read(parameter, field);
-        if (value != null) {
-            // The value already exists.
-            return true;
-        }
-        Class<?> type = field.getType();
-        if (!Number.class.isAssignableFrom(type)) {
-            return false;
-        }
-        if (Long.class.isAssignableFrom(type)) {
-            write(parameter, field, nextValue(key));
-        } else if (Integer.class.isAssignableFrom(type)) {
-            write(parameter, field, nextValue(key).intValue());
-        } else if (Short.class.isAssignableFrom(type)) {
-            write(parameter, field, nextValue(key).shortValue());
-        } else if (BigInteger.class.isAssignableFrom(type)) {
-            write(parameter, field, BigInteger.valueOf(nextValue(key)));
-        } else if (BigDecimal.class.isAssignableFrom(type)) {
-            write(parameter, field, BigDecimal.valueOf(nextValue(key)));
+    private void handle(Object parameter) throws NoSuchFieldException, IllegalAccessException {
+        if (parameter instanceof Map) {
+            List<Meta> metas = new ArrayList<>();
+            Map<?, ?> map = (Map<?, ?>) parameter;
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                Object value = entry.getValue();
+                if (value instanceof Collection) {
+                    Collection<?> objects = (Collection<?>) value;
+                    for (Object object : objects) {
+                        Meta meta = getMeta(object);
+                        if (meta != null) {
+                            metas.add(meta);
+                        }
+                    }
+                    if (!metas.isEmpty()) {
+                        break;
+                    }
+                }
+            }
+            setSeq(metas);
+        } else if (parameter instanceof Collection) {
+            List<Meta> metas = new ArrayList<>();
+            Collection<?> objects = (Collection<?>) parameter;
+            for (Object object : objects) {
+                Meta meta = getMeta(object);
+                if (meta != null) {
+                    metas.add(meta);
+                }
+            }
+            if (!metas.isEmpty()) {
+                setSeq(metas);
+            }
         } else {
-            return false;
+            Meta meta = getMeta(parameter);
+            if (meta != null) {
+                setSeq(Collections.singletonList(meta));
+            }
         }
-        return true;
     }
 
-    private Long nextValue(String key) {
-        return uniqueClient.next(key);
+    private Meta getMeta(Object object) throws NoSuchFieldException, IllegalAccessException {
+        if (object == null) {
+            return null;
+        }
+        AutoSeq tas = object.getClass().getAnnotation(AutoSeq.class);
+        if (tas != null) {
+            String key = getAlias(tas.value(), tas.key());
+            if (hasLength(key) && hasLength(tas.field())) {
+                Field field = ReflectUtils.getDeepField(object, tas.field());
+                if (isSettable(object, field)) {
+                    return new Meta(key, field, object);
+                }
+            }
+            return null;
+        }
+
+        Field[] fields = ReflectUtils.getDeepFields(object, true);
+        for (Field field : fields) {
+            Annotation[] annotations = field.getDeclaredAnnotations();
+            if (annotations.length == 0) {
+                continue;
+            }
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof AutoSeq) {
+                    AutoSeq fas = (AutoSeq) annotation;
+                    String key = getAlias(fas.value(), fas.key());
+                    if (hasLength(key) && isSettable(object, field)) {
+                        return new Meta(key, field, object);
+                    }
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean isSettable(Object object, Field field) throws IllegalAccessException {
+        field.setAccessible(true);
+        Object value = read(object, field);
+        if (value != null) {
+            // The value already exists.
+            return false;
+        }
+        Class<?> type = field.getType();
+        return Long.class.isAssignableFrom(type)
+                || Integer.class.isAssignableFrom(type)
+                || Short.class.isAssignableFrom(type)
+                || BigInteger.class.isAssignableFrom(type)
+                || BigDecimal.class.isAssignableFrom(type)
+                || String.class.isAssignableFrom(type);
+    }
+
+    private void setSeq(List<Meta> list) throws IllegalAccessException {
+        if (list.size() == 1) {
+            setSeq(list.get(0), uniqueClient.next(list.get(0).getKey()));
+        } else {
+            Map<String, List<Meta>> group = list.stream().collect(Collectors.groupingBy(Meta::getKey));
+            for (Map.Entry<String, List<Meta>> entry : group.entrySet()) {
+                String key = entry.getKey();
+                List<Meta> metas = entry.getValue();
+                LinkedList<Long> sequences = uniqueClient.next(key, metas.size());
+                for (Meta meta : metas) {
+                    setSeq(meta, sequences.remove());
+                }
+            }
+        }
+    }
+
+    private void setSeq(Meta meta, Long sequence) throws IllegalAccessException {
+        Object object = meta.getObject();
+        Field field = meta.getField();
+        Class<?> type = field.getType();
+        if (Long.class.isAssignableFrom(type)) {
+            write(object, field, sequence);
+        } else if (Integer.class.isAssignableFrom(type)) {
+            write(object, field, sequence.intValue());
+        } else if (Short.class.isAssignableFrom(type)) {
+            write(object, field, sequence.shortValue());
+        } else if (BigInteger.class.isAssignableFrom(type)) {
+            write(object, field, BigInteger.valueOf(sequence));
+        } else if (BigDecimal.class.isAssignableFrom(type)) {
+            write(object, field, BigDecimal.valueOf(sequence));
+        } else if (String.class.isAssignableFrom(type)) {
+            write(object, field, String.valueOf(sequence));
+        }
     }
 
     private Object read(Object o, Field field) throws IllegalAccessException {
@@ -124,6 +196,42 @@ public class AutoSeqInterceptor implements Interceptor {
 
     private String getAlias(String s1, String s2) {
         return hasLength(s1) ? s1 : s2;
+    }
+
+    private static class Meta {
+        private String key;
+        private Field field;
+        private Object object;
+
+        public Meta(String key, Field field, Object object) {
+            this.key = key;
+            this.field = field;
+            this.object = object;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        public Field getField() {
+            return field;
+        }
+
+        public void setField(Field field) {
+            this.field = field;
+        }
+
+        public Object getObject() {
+            return object;
+        }
+
+        public void setObject(Object object) {
+            this.object = object;
+        }
     }
 
 }

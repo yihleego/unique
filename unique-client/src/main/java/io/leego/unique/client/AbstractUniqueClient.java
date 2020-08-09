@@ -36,7 +36,7 @@ public abstract class AbstractUniqueClient implements UniqueClient {
         return toCollection(segment.getBegin(), segment.getEnd(), segment.getIncrement(), collectionFactory);
     }
 
-    public void validate(final long begin, final long end, final int increment) {
+    protected void validate(final long begin, final long end, final int increment) {
         long difference = end - begin;
         if (difference >= 0 && difference % increment == 0) {
             return;

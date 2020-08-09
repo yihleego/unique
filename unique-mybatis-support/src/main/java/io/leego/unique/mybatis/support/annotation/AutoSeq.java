@@ -8,6 +8,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Annotation for setting sequence automatically.
+ * Usage:
+ * <pre>
+ * class Entity {
+ *     <code>@AutoSeq("key")</code>
+ *     Long id;
+ * }
+ * </pre>
+ * <p>
+ * <pre>
+ * <code>@AutoSeq(key = "key", field = "id")</code>
+ * class Entity {
+ *     Long id;
+ * }
+ * </pre>
  * @author Yihleego
  */
 @Retention(RetentionPolicy.RUNTIME)

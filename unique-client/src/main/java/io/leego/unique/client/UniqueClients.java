@@ -96,8 +96,8 @@ public final class UniqueClients {
             return this;
         }
 
-        public Builder ssl(boolean ssl) {
-            this.ssl = ssl;
+        public Builder ssl() {
+            this.ssl = true;
             return this;
         }
 
@@ -106,8 +106,8 @@ public final class UniqueClients {
             return this;
         }
 
-        public Builder cached(boolean cached) {
-            this.cached = cached;
+        public Builder cached() {
+            this.cached = true;
             return this;
         }
 

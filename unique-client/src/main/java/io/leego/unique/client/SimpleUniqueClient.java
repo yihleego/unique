@@ -30,7 +30,7 @@ public class SimpleUniqueClient extends AbstractUniqueClient {
     @Override
     public <C extends Collection<Long>> C next(String key, int size, Supplier<C> collectionFactory) {
         if (size <= 0) {
-            throw new IllegalArgumentException("The size cannot be negative or zero.");
+            return collectionFactory.get();
         }
         Result<Segment> result = uniqueService.next(key, size);
         if (!Result.isSuccessful(result)) {

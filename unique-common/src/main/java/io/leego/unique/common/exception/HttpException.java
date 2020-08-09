@@ -4,7 +4,6 @@ import io.leego.unique.common.enums.HttpStatus;
 
 /**
  * HttpException for wrapping runtime {@code Exceptions} with an root cause.
- * <p>This class is {@code abstract} to force the programmer to extend the class. </p>
  * @author Yihleego
  */
 public class HttpException extends RuntimeException {
