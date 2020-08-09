@@ -1,0 +1,70 @@
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+input, button {
+    outline: none;
+}
+
+main {
+    width: 100%;
+    height: 100%;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.main {
+    height: 100%;
+}
+
+.home {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-wrap: wrap;
+}
+
+.logo {
+    text-align: center;
+    cursor: pointer;
+}
+
+.monitor {
+    height: 100%;
+}
+
+.monitor-main {
+    height: 100%;
+    overflow-y: auto;
+    padding-top: 64px;
+}
+
+.title {
+    overflow: hidden;
+    display: block;
+    white-space: nowrap;
+}
+
+.title span {
+    display: inline-block;
+}
+
+.snapshot-loading {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-wrap: wrap;
+}
+
+[v-cloak] {
+    display: none;
+}

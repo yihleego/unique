@@ -1,110 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Unique Sequence Console</title>
+    <title>Unique Console</title>
     <meta charset='UTF-8'>
-    <meta content='Unique Sequence Console' name='description'>
+    <meta content='Unique Console' name='description'>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <link rel='shortcut icon' href='/unique/images/favicon.png' type='image/png' sizes='16x16'>
     <link href="/unique/styles/vuetify.min.css" rel="stylesheet" type="text/css">
+    <link href="/unique/styles/unique.css" rel="stylesheet" type="text/css">
+    <link href="/unique/styles/materialdesignicons.min.css" rel="stylesheet">
 </head>
 <body>
 <main id='app'>
-    <div v-for="seq in sequences">
-        <div>key: {{seq.key}}</div>
-        <div>value: {{seq.value}}</div>
-        <div>increment: {{seq.increment}}</div>
-        <div>cache-size: {{seq.cache}}</div>
-        <div>version: {{seq.version}}</div>
-        <div>create time: {{seq.createTime}}</div>
-        <div>update time: {{seq.updateTime}}</div>
-    </div>
+    <v-app class="main">
+        <router-view></router-view>
+    </v-app>
 </main>
-<script src='/unique/scripts/vue.min.js'></script>
-<script src='/unique/scripts/vue-router.min.js'></script>
-<script src='/unique/scripts/vue-i18n.min.js'></script>
-<script src='/unique/scripts/vuetify.min.js'></script>
-<script src='/unique/scripts/axios.min.js'></script>
-<script>
-    const api = {
-        console: {
-            save(params, callback) {
-                $post(`/consoles/sequences`, params, callback);
-            },
-            update(params, callback) {
-                $put(`/consoles/sequences/${params.key}`, params, callback);
-            },
-            delete(params, callback) {
-                $delete(`/consoles/sequences/${params.key}`, params, callback);
-            },
-            list(params, callback) {
-                $get(`/consoles/sequences`, params, callback);
-            },
-            getSnapshot(params, callback) {
-                $get(`/consoles/sequences/${params.key}/snapshot`, params, callback);
-            },
-            skip(params, callback) {
-                $patch(`/consoles/sequences/${params.key}/skip/${params.size}`, params, callback);
-            },
-            load(params, callback) {
-                $put(`/consoles/configurations/${params.key}`, params, callback);
-            },
-        },
-    };
-
-    const vm = new Vue({
-        el: '#app',
-        data: {
-            sequences: [],
-        },
-        methods: {
-            init() {
-                api.console.list(null, (result) => {
-                    if (result.success) {
-                        this.sequences = result.data.list;
-                    }
-                });
-            },
-        },
-        created() {
-            this.init();
-        },
-    });
-
-    function $get(uri, params, callback) {
-        handler(axios.get(uri, {params}), callback);
-    }
-
-    function $post(uri, params, callback) {
-        handler(axios.post(uri, params), callback);
-    }
-
-    function $put(uri, params, callback) {
-        handler(axios.put(uri, params), callback);
-    }
-
-    function $patch(uri, params, callback) {
-        handler(axios.patch(uri, params), callback);
-    }
-
-    function $delete(uri, params, callback) {
-        handler(axios.delete(uri, {params}), callback);
-    }
-
-    function handler(o, callback) {
-        o.then((result) => {
-            if (callback) {
-                callback(result.data);
-            }
-        }).catch((error) => {
-            if (callback) {
-                callback({
-                    success: false,
-                    message: error.response.statusText
-                });
-            }
-        });
-    }
-
-</script>
+<script src='/unique/scripts/dist/vue.min.js'></script>
+<script src='/unique/scripts/dist/vue-router.min.js'></script>
+<script src='/unique/scripts/dist/vue-i18n.min.js'></script>
+<script src='/unique/scripts/dist/vuetify.min.js'></script>
+<script src='/unique/scripts/dist/axios.min.js'></script>
+<script src='/unique/scripts/main.js'></script>
 </body>
 </html>
