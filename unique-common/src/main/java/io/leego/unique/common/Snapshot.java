@@ -1,4 +1,4 @@
-package io.leego.unique.core.entity;
+package io.leego.unique.common;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 /**
  * @author Yihleego
  */
-public class SnapshotSequence implements Serializable {
+public class Snapshot implements Serializable {
     private static final long serialVersionUID = 7486120717801149583L;
     private String key;
     private long cur;
@@ -16,10 +16,10 @@ public class SnapshotSequence implements Serializable {
     private int version;
     private LocalDateTime snapshotTime;
 
-    public SnapshotSequence() {
+    public Snapshot() {
     }
 
-    public SnapshotSequence(String key, long cur, long max, int increment, int cache, int version, LocalDateTime snapshotTime) {
+    public Snapshot(String key, long cur, long max, int increment, int cache, int version, LocalDateTime snapshotTime) {
         this.key = key;
         this.cur = cur;
         this.max = max;

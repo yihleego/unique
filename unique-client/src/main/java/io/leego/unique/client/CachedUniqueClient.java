@@ -1,16 +1,15 @@
 package io.leego.unique.client;
 
-import io.leego.unique.client.service.UniqueService;
 import io.leego.unique.common.Result;
 import io.leego.unique.common.Segment;
 import io.leego.unique.common.exception.ObtainErrorException;
 import io.leego.unique.common.exception.ObtainTimeoutException;
 import io.leego.unique.common.exception.SequenceNotFoundException;
+import io.leego.unique.common.service.UniqueService;
 import io.leego.unique.common.util.NamedThreadFactory;
 
 import java.time.Duration;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -24,12 +23,11 @@ import java.util.function.Supplier;
  * @author Yihleego
  */
 public class CachedUniqueClient extends AbstractUniqueClient {
-    protected static final int CACHE_SIZE = 1000;
+    protected static final int CACHE_SIZE = 100;
     protected static final Duration TIMEOUT = Duration.ofSeconds(3L);
     protected static final float FACTOR = 0.2f;
     protected final ConcurrentMap<String, CachedSeq> seqMap = new ConcurrentHashMap<>(32);
-    protected final ExecutorService executor = Executors.newFixedThreadPool(5, NamedThreadFactory.build("unique-client", "cache-sync", true));
-    protected final UniqueService uniqueService;
+    protected final ExecutorService executor = Executors.newFixedThreadPool(4, NamedThreadFactory.build("unique-client", "sync", true));
     protected final int cacheSize;
     protected final Duration timeout;
     protected final float factor;
@@ -43,8 +41,7 @@ public class CachedUniqueClient extends AbstractUniqueClient {
     }
 
     public CachedUniqueClient(UniqueService uniqueService, Integer cacheSize, Duration timeout) {
-        Objects.requireNonNull(uniqueService);
-        this.uniqueService = uniqueService;
+        super(uniqueService);
         this.cacheSize = cacheSize != null ? cacheSize : CACHE_SIZE;
         this.timeout = timeout != null ? timeout : TIMEOUT;
         this.factor = FACTOR;
@@ -61,18 +58,20 @@ public class CachedUniqueClient extends AbstractUniqueClient {
     @Override
     public Long next(String key) {
         CachedSeq seq = getSeq(key);
+        trySync(seq);
         try {
             Long value = seq.poll();
             if (value != null) {
                 return value;
             } else {
                 if (seq.isPresent()) {
-                    throw new ObtainTimeoutException("Obtain values timeout");
+                    throw new ObtainTimeoutException("Obtain sequence \"" + key + "\" timeout");
                 } else {
-                    throw new SequenceNotFoundException("The sequence named \"" + key + "\" was not found");
+                    throw new SequenceNotFoundException("The sequence \"" + key + "\" was not found");
                 }
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new ObtainErrorException(e);
         }
     }
@@ -80,13 +79,14 @@ public class CachedUniqueClient extends AbstractUniqueClient {
     @Override
     public <C extends Collection<Long>> C next(String key, int size, Supplier<C> collectionFactory) {
         if (size <= 0) {
-            throw new IllegalArgumentException("The size cannot be negative or zero.");
+            return collectionFactory.get();
         }
         C collection = collectionFactory.get();
         CachedSeq seq = getSeq(key);
+        trySync(seq);
         try {
             for (int i = 0; i < size; i++) {
-                if (seq.isEmpty() && i != 0) {
+                if (seq.isEmpty()) {
                     trySync(seq);
                 }
                 Long value = seq.poll();
@@ -94,22 +94,21 @@ public class CachedUniqueClient extends AbstractUniqueClient {
                     collection.add(value);
                 } else {
                     if (seq.isPresent()) {
-                        throw new ObtainTimeoutException("Obtain values timeout");
+                        throw new ObtainTimeoutException("Obtain sequence \"" + key + "\" timeout");
                     } else {
-                        throw new SequenceNotFoundException("The sequence named \"" + key + "\" was not found");
+                        throw new SequenceNotFoundException("The sequence \"" + key + "\" was not found");
                     }
                 }
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new ObtainErrorException(e);
         }
         return collection;
     }
 
     protected CachedSeq getSeq(final String key) {
-        CachedSeq seq = seqMap.computeIfAbsent(key, k -> new CachedSeq(k, cacheSize, factor, timeout.toMillis(), timeout.toMillis()));
-        trySync(seq);
-        return seq;
+        return seqMap.computeIfAbsent(key, k -> new CachedSeq(k, cacheSize, factor, timeout.toMillis(), timeout.toMillis()));
     }
 
     protected void trySync(final CachedSeq seq) {
@@ -134,7 +133,10 @@ public class CachedUniqueClient extends AbstractUniqueClient {
                                 seq.setPresent(true);
                             }
                             Segment segment = result.getData();
-                            for (long i = segment.getBegin(); i <= segment.getEnd(); i++) {
+                            long begin = segment.getBegin();
+                            long end = segment.getEnd();
+                            int increment = segment.getIncrement();
+                            for (long i = begin; i <= end; i += increment) {
                                 seq.offer(i);
                             }
                         }

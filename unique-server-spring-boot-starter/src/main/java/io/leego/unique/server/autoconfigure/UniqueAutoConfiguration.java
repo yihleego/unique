@@ -23,12 +23,12 @@ import com.mongodb.client.MongoClients;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.leego.unique.common.util.DatePattern;
-import io.leego.unique.common.util.StringUtils;
 import io.leego.unique.core.manager.SequenceManager;
 import io.leego.unique.core.manager.impl.JdbcSequenceManagerImpl;
 import io.leego.unique.core.manager.impl.MongoSequenceManagerImpl;
 import io.leego.unique.core.service.SequenceService;
-import io.leego.unique.core.service.impl.SequenceServiceImpl;
+import io.leego.unique.core.service.impl.ClusterSequenceServiceImpl;
+import io.leego.unique.core.service.impl.StandaloneSequenceServiceImpl;
 import io.leego.unique.server.console.service.ConsoleService;
 import io.leego.unique.server.console.service.impl.ConsoleServiceImpl;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -84,10 +84,12 @@ public class UniqueAutoConfiguration {
     @Bean
     @ConditionalOnBean(SequenceManager.class)
     @ConditionalOnMissingBean
-    public SequenceService sequenceService(SequenceManager sequenceManager) {
-        SequenceService sequenceService = new SequenceServiceImpl(sequenceManager);
-        sequenceService.init();
-        return sequenceService;
+    public SequenceService sequenceService(SequenceManager sequenceManager, UniqueServerProperties properties) {
+        if (properties.getCluster().isEnabled()) {
+            return new ClusterSequenceServiceImpl(sequenceManager, properties.getCluster().getRetries(), properties.getCluster().isAllowSingle());
+        } else {
+            return new StandaloneSequenceServiceImpl(sequenceManager);
+        }
     }
 
     @Configuration
@@ -110,9 +112,7 @@ public class UniqueAutoConfiguration {
         @ConditionalOnBean(DataSource.class)
         @ConditionalOnMissingBean
         public SequenceManager jdbcSequenceManager(DataSource dataSource, UniqueServerProperties properties) {
-            return new JdbcSequenceManagerImpl(
-                    dataSource,
-                    properties.getJdbc().getTable());
+            return new JdbcSequenceManagerImpl(dataSource, properties.getJdbc().getTable());
         }
 
     }
@@ -132,7 +132,7 @@ public class UniqueAutoConfiguration {
             String database = properties.getMongodb().getDatabase();
             MongoClientSettings.Builder builder = MongoClientSettings.builder()
                     .applyConnectionString(new ConnectionString(uri));
-            if (StringUtils.isNotEmpty(username)) {
+            if (username != null && !username.isEmpty()) {
                 MongoCredential credential = MongoCredential.createCredential(
                         username,
                         database,
@@ -146,10 +146,7 @@ public class UniqueAutoConfiguration {
         @ConditionalOnBean(MongoClient.class)
         @ConditionalOnMissingBean
         public SequenceManager mongoSequenceManager(MongoClient mongoClient, UniqueServerProperties properties) {
-            return new MongoSequenceManagerImpl(
-                    mongoClient,
-                    properties.getMongodb().getDatabase(),
-                    properties.getMongodb().getCollection());
+            return new MongoSequenceManagerImpl(mongoClient, properties.getMongodb().getDatabase(), properties.getMongodb().getCollection());
         }
 
     }
@@ -163,8 +160,8 @@ public class UniqueAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        public ConsoleService consoleService(SequenceManager sequenceManager, SequenceService sequenceService) {
-            return new ConsoleServiceImpl(sequenceManager, sequenceService);
+        public ConsoleService consoleService(SequenceService sequenceService) {
+            return new ConsoleServiceImpl(sequenceService);
         }
 
     }

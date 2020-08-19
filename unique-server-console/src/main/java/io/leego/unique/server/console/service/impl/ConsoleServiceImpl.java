@@ -3,10 +3,9 @@ package io.leego.unique.server.console.service.impl;
 import io.leego.unique.common.Page;
 import io.leego.unique.common.Result;
 import io.leego.unique.common.Segment;
-import io.leego.unique.common.util.ErrorCode;
+import io.leego.unique.common.Snapshot;
+import io.leego.unique.common.enums.Mode;
 import io.leego.unique.core.entity.Sequence;
-import io.leego.unique.core.entity.SnapshotSequence;
-import io.leego.unique.core.manager.SequenceManager;
 import io.leego.unique.core.service.SequenceService;
 import io.leego.unique.server.console.dto.SequenceSaveDTO;
 import io.leego.unique.server.console.dto.SequenceSearchDTO;
@@ -20,45 +19,54 @@ import java.time.LocalDateTime;
  */
 public class ConsoleServiceImpl implements ConsoleService {
     private static final int DEFAULT_VERSION = 1;
-    private final SequenceManager sequenceManager;
     private final SequenceService sequenceService;
 
-    public ConsoleServiceImpl(SequenceManager sequenceManager, SequenceService sequenceService) {
-        this.sequenceManager = sequenceManager;
+    public ConsoleServiceImpl(SequenceService sequenceService) {
         this.sequenceService = sequenceService;
     }
 
     @Override
     public Result<Void> save(SequenceSaveDTO dto) {
-        sequenceManager.save(new Sequence(dto.getKey(), dto.getValue(), dto.getIncrement(), dto.getCache(), DEFAULT_VERSION, LocalDateTime.now(), null));
-        return Result.buildSuccess();
+        return sequenceService.save(new Sequence(
+                dto.getKey().trim(),
+                dto.getValue(),
+                dto.getIncrement(),
+                dto.getCache(),
+                DEFAULT_VERSION,
+                LocalDateTime.now(),
+                null));
     }
 
     @Override
     public Result<Void> update(SequenceUpdateDTO dto) {
-        sequenceManager.update(new Sequence(dto.getKey(), null, dto.getIncrement(), dto.getCache(), null, null, LocalDateTime.now()));
-        return Result.buildSuccess();
+        return sequenceService.update(new Sequence(
+                dto.getKey().trim(),
+                null,
+                dto.getIncrement(),
+                dto.getCache(),
+                null,
+                null,
+                LocalDateTime.now()));
     }
 
     @Override
     public Result<Void> delete(String key) {
-        sequenceManager.delete(key);
-        return Result.buildSuccess();
+        return sequenceService.delete(key);
     }
 
     @Override
     public Result<Page<Sequence>> list(SequenceSearchDTO dto) {
-        return Result.buildSuccess(Page.of(sequenceManager.findAll()));
+        return sequenceService.list();
     }
 
     @Override
     public Result<Sequence> get(String key) {
-        return Result.buildSuccess(sequenceManager.findByKey(key));
+        return sequenceService.get(key);
     }
 
     @Override
-    public Result<SnapshotSequence> getSnapshot(String key) {
-        return Result.buildSuccess(sequenceService.getSnapshot(key));
+    public Result<Snapshot> getSnapshot(String key) {
+        return sequenceService.getSnapshot(key);
     }
 
     @Override
@@ -68,12 +76,12 @@ public class ConsoleServiceImpl implements ConsoleService {
 
     @Override
     public Result<Void> load(String key) {
-        Sequence sequence = sequenceManager.findByKey(key);
-        if (sequence == null) {
-            return Result.buildFailure(ErrorCode.NOT_FOUND, "There is no sequence named \"" + key + '\"');
-        }
-        sequenceService.merge(sequence);
-        return Result.buildSuccess();
+        return sequenceService.load(key);
+    }
+
+    @Override
+    public Result<Mode> getMode() {
+        return sequenceService.getMode();
     }
 
 }

@@ -26,20 +26,9 @@ const api = {
         load(params, callback) {
             $put(`/consoles/configurations/${params.key}`, params, callback);
         },
-    },
-};
-const home = {
-    template: `
-<v-card class="home">
-    <v-card-text class="logo" @click="forwardMonitor"><img src="/unique/images/logo.png"/></v-card-text>
-    <v-btn color="#14b0bf" dark @click="forwardMonitor">Enter</v-btn>
-</v-card>`,
-    methods: {
-        forwardMonitor() {
-            this.$router.push({name: 'monitor'});
+        getMode(params, callback) {
+            $get(`/consoles/modes`, params, callback);
         },
-    },
-    created() {
     },
 };
 const monitor = {
@@ -49,7 +38,9 @@ const monitor = {
                elevate-on-scroll
                scroll-target="#scrolling-techniques"
                color="white">
-        <v-toolbar-title>Unique Console</v-toolbar-title>
+        <v-toolbar-title>
+            <span class="navbar-title">Unique Console</span><span class="navbar-mode">{{mode}}</span>
+        </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-text-field
                 v-model="search"
@@ -63,7 +54,7 @@ const monitor = {
         <!--<v-btn icon @click="expandAll">
             <v-icon>mdi-arrow-expand-vertical</v-icon>
         </v-btn>-->
-        <v-btn icon @click="collapseAll">
+        <v-btn icon @click="collapseAll" v-if="standalone">
             <v-icon>mdi-arrow-collapse-vertical</v-icon>
         </v-btn>
     </v-app-bar>
@@ -78,7 +69,7 @@ const monitor = {
                       :expanded.sync="expanded"
                       item-key="key"
                       @item-expanded="itemExpanded"
-                      show-expand
+                      :show-expand="showExpand"
                       dense
                       disable-pagination="true"
                       hide-default-footer="true">
@@ -108,6 +99,14 @@ const monitor = {
                 </v-tooltip>
                 <v-tooltip top open-delay="500">
                     <template v-slot:activator="{ on, attrs }">
+                        <v-btn icon @click="openSkipDialog(item.key)" v-bind="attrs" v-on="on" v-if="!standalone">
+                            <v-icon>mdi-skip-forward-outline</v-icon>
+                        </v-btn>
+                    </template>
+                    <span>Skip</span>
+                </v-tooltip>
+                <v-tooltip top open-delay="500">
+                    <template v-slot:activator="{ on, attrs }">
                         <v-btn icon @click="openDeleteDialog(item.key)" v-bind="attrs" v-on="on">
                             <v-icon>
                                 mdi-delete-forever-outline
@@ -117,7 +116,10 @@ const monitor = {
                     <span>Delete</span>
                 </v-tooltip>
             </template>
-            <template v-slot:expanded-item="{ headers, item }" :headers="headers">
+            <template v-slot:item.cache="{ item }">
+                <span v-bind:class="!standalone ? 'font-grey' : ''">{{item.cache}}</span>
+            </template>
+            <template v-slot:expanded-item="{ headers, item }">
                 <td :colspan="headers.length">
                     <v-row>
                         <v-col :cols="6">
@@ -134,7 +136,7 @@ const monitor = {
                                             color="primary"
                                             text-color="white"
                                             small>
-                                        <v-avatar left class="primary darken-3 caption">
+                                        <v-avatar left class="primary darken-3">
                                             Ver
                                         </v-avatar>
                                         {{ item.version }}
@@ -161,12 +163,12 @@ const monitor = {
                                     <v-list-item>
                                         <v-list-item-content>Value</v-list-item-content>
                                         <v-list-item-content>{{ item.value }}</v-list-item-content>
+                                        <v-list-item-content></v-list-item-content>
+                                        <v-list-item-content></v-list-item-content>
                                     </v-list-item>
                                     <v-list-item>
                                         <v-list-item-content>Increment</v-list-item-content>
                                         <v-list-item-content>{{ item.increment }}</v-list-item-content>
-                                    </v-list-item>
-                                    <v-list-item>
                                         <v-list-item-content>Cache Size</v-list-item-content>
                                         <v-list-item-content>{{ item.cache }}</v-list-item-content>
                                     </v-list-item>
@@ -187,7 +189,7 @@ const monitor = {
                                             color="green"
                                             text-color="white"
                                             small>
-                                        <v-avatar left class="green darken-3 caption">
+                                        <v-avatar left class="green darken-3">
                                             Ver
                                         </v-avatar>
                                         {{ item.snapshot.version }}
@@ -215,7 +217,7 @@ const monitor = {
                                     </v-tooltip>
                                     <v-tooltip top open-delay="500">
                                         <template v-slot:activator="{ on, attrs }">
-                                            <v-btn icon color="green" @click="load(item.key)"
+                                            <v-btn icon color="green" @click="openLoadDialog(item.key)"
                                                    :disabled="item.loadingSnapshot || item.version === item.snapshot.version"
                                                    v-bind="attrs" v-on="on">
                                                 <v-icon>mdi-database-sync</v-icon>
@@ -244,14 +246,8 @@ const monitor = {
                                     <v-list-item>
                                         <v-list-item-content>Increment</v-list-item-content>
                                         <v-list-item-content>{{ item.snapshot.increment }}</v-list-item-content>
-                                        <v-list-item-content></v-list-item-content>
-                                        <v-list-item-content></v-list-item-content>
-                                    </v-list-item>
-                                    <v-list-item>
                                         <v-list-item-content>Cache Size</v-list-item-content>
                                         <v-list-item-content>{{ item.snapshot.cache }}</v-list-item-content>
-                                        <v-list-item-content></v-list-item-content>
-                                        <v-list-item-content></v-list-item-content>
                                     </v-list-item>
                                 </v-list>
                             </v-card>
@@ -303,7 +299,7 @@ const monitor = {
                     </v-col>
                     <v-col cols="12" sm="6" md="6">
                         <v-text-field label="Cache Size" required outlined clearable dense
-                                      :rules="rules.cache" v-model="saveSequence.cache" type="number" min="1"
+                                      :rules="rules.cache" v-model="saveSequence.cache" type="number" min="1" :disabled="!standalone"
                                       @keyup.ctrl.enter.native="save">
                         </v-text-field>
                     </v-col>
@@ -319,7 +315,7 @@ const monitor = {
     <v-dialog v-model="showUpdateDialog" max-width="600px">
         <v-card>
             <v-card-title>
-                <span class="headline">Edit Sequence <v-chip>{{updateSequence.key}}</v-chip></span>
+                <span class="headline">Update Sequence <v-chip>{{updateSequence.key}}</v-chip></span>
             </v-card-title>
             <v-card-text>
                 <v-row>
@@ -331,7 +327,7 @@ const monitor = {
                     </v-col>
                     <v-col cols="12" sm="6" md="6">
                         <v-text-field label="Cache Size" required outlined clearable dense
-                                      :rules="rules.cache" v-model="updateSequence.cache" type="number" min="1"
+                                      :rules="rules.cache" v-model="updateSequence.cache" type="number" min="1" :disabled="!standalone"
                                       @keyup.ctrl.enter.native="update">
                         </v-text-field>
                     </v-col>
@@ -340,27 +336,24 @@ const monitor = {
             <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="blue darken-1" text @click="showUpdateDialog = false">Close</v-btn>
-                <v-btn color="blue darken-1" text @click="update">Save</v-btn>
+                <v-btn color="blue darken-1" text @click="update">Update</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
     <v-dialog v-model="showDeleteDialog" max-width="600px">
         <v-card>
             <v-card-title class="headline lighten-2">
-                Please confirm
+                Confirm
             </v-card-title>
             <v-card-text>
-                This action cannot be undone. Please type <span style="background: #e0e0e0; word-break: break-all;">{{deleteSequence.key}}</span> to delete.
+                This action cannot be undone. Please type <span style="background: #e0e0e0; word-break: break-all;">{{deleteSequence.key}}</span> to delete the sequence.
                 <v-text-field dense color="red" v-model="deleteSequence.input"></v-text-field>
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="red darken-1" text @click="showDeleteDialog = false">Close</v-btn>
-                <v-btn color="red darken-1" text
-                       :disabled="!(deleteSequence.key == deleteSequence.input)"
-                       @click="remove(deleteSequence.key)">
-                    delete
-                </v-btn>
+                <v-btn color="red darken-1" text @click="remove(deleteSequence.key)"
+                       :disabled="!deleteSequence.input || deleteSequence.key != deleteSequence.input.trim()">Delete</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -378,7 +371,7 @@ const monitor = {
                         </v-text-field>
                     </v-col>
                     <v-col cols="12">
-                        <div class="d-flex justify-space-between caption">
+                        <div class="d-flex justify-space-between">
                             <div>
                                 <div class="grey--text mb-2 text-center">Size</div>
                                 <div class="font-weight-medium text-center">{{skipSequence.size?skipSequence.size:'0'}}</div>
@@ -418,6 +411,21 @@ const monitor = {
             </v-card-actions>
         </v-card>
     </v-dialog>
+    <v-dialog v-model="showLoadDialog" max-width="600px">
+        <v-card>
+            <v-card-title class="headline lighten-2">
+                Confirm
+            </v-card-title>
+            <v-card-text>
+                Please confirm whether to load the sequence <span style="background: #e0e0e0; word-break: break-all;">{{loadSequence.key}}</span> into memory.
+            </v-card-text>
+            <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="blue darken-1" text @click="showLoadDialog = false">Close</v-btn>
+                <v-btn color="blue darken-1" text @click="load(loadSequence.key)">Load</v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
     <v-snackbar top right v-model="snackbar" color="error" timeout="3000">
         {{ message }}
         <template v-slot:action="{ attrs }">
@@ -429,7 +437,10 @@ const monitor = {
 </div>`,
     data() {
         return {
+            mode: null,
+            standalone: false,
             loading: false,
+            showExpand: false,
             singleExpand: false,
             expanded: [],
             search: '',
@@ -439,6 +450,7 @@ const monitor = {
             showUpdateDialog: false,
             showDeleteDialog: false,
             showSkipDialog: false,
+            showLoadDialog: false,
             rules: {
                 key: [
                     value => (value != null && value != '') || "Key is required",
@@ -475,12 +487,12 @@ const monitor = {
                 key: null,
                 value: 0,
                 increment: 1,
-                cache: 10000,
+                cache: 5000,
             },
             updateSequence: {
                 key: null,
                 increment: 1,
-                cache: 10000,
+                cache: 5000,
             },
             deleteSequence: {
                 key: null,
@@ -490,63 +502,80 @@ const monitor = {
                 key: null,
                 size: 0,
             },
+            loadSequence: {
+                key: null,
+            },
         };
     },
     methods: {
         list() {
             this.loading = true;
-            api.console.list(null, (result) => {
+            api.console.getMode(null, (result) => {
                 if (!result.success) {
                     this.loading = false;
                     this.toast(result.message);
                     return;
                 }
-                let list = result.data.list;
-                for (let i in list) {
-                    let seq = list[i];
-                    this.warp(seq);
+                this.mode = result.data;
+                if (this.mode === 'STANDALONE') {
+                    this.showExpand = true;
+                    this.standalone = true;
                 }
-                this.sort(list);
-                this.sequences = list;
-                this.loading = false;
+                api.console.list(null, (result) => {
+                    if (!result.success) {
+                        this.loading = false;
+                        this.toast(result.message);
+                        return;
+                    }
+                    let list = result.data.list;
+                    for (let i in list) {
+                        let seq = list[i];
+                        this.warp(seq);
+                    }
+                    this.sort(list);
+                    this.sequences = list;
+                    this.loading = false;
+                });
             });
         },
         get(key) {
             let sequence = this.getByKey(key);
+            let present = true;
             if (!sequence) {
-                return;
+                sequence = {};
+                present = false;
             }
             sequence.loading = true;
             api.console.get({key}, (result) => {
+                sequence.loading = false;
                 if (!result.success) {
-                    sequence.loading = false;
                     this.toast(result.message);
                     return;
                 }
-                for (let i in this.sequences) {
-                    if (this.sequences[i].key == key) {
-                        for (let k in result.data) {
-                            this.sequences[i][k] = result.data[k];
-                        }
-                        break;
-                    }
+                if (!result.data) {
+                    return;
                 }
-                sequence.loading = false;
+                sequence.key = result.data.key;
+                sequence.value = result.data.value;
+                sequence.increment = result.data.increment;
+                sequence.cache = result.data.cache;
+                sequence.version = result.data.version;
+                sequence.createTime = result.data.createTime;
+                sequence.updateTime = result.data.updateTime;
+                if (!present) {
+                    this.warp(sequence);
+                    this.sequences.unshift(sequence);
+                }
             });
         },
         remove(key) {
-            api.console.delete({key}, (result) => {
+            api.console.delete({key: key.trim()}, (result) => {
                 if (!result.success) {
                     this.showDeleteDialog = false;
                     this.toast(result.message);
                     return;
                 }
-                for (let i in this.sequences) {
-                    if (this.sequences[i].key == key) {
-                        this.sequences.splice(i, 1);
-                        break;
-                    }
-                }
+                this.delByKey(key);
                 this.showDeleteDialog = false;
             });
         },
@@ -560,6 +589,12 @@ const monitor = {
                     }
                 }
             }
+            this.saveSequence.key = this.saveSequence.key.trim();
+            let sequence = this.getByKey(this.saveSequence.key);
+            if (sequence) {
+                this.toast("Sequence '" + sequence.key + "' already exists");
+                return;
+            }
             api.console.save(this.saveSequence, (result) => {
                 if (!result.success) {
                     this.toast(result.message);
@@ -570,10 +605,12 @@ const monitor = {
                     value: this.saveSequence.value,
                     increment: this.saveSequence.increment,
                     cache: this.saveSequence.cache,
+                    version: 1,
+                    createTime: this.format(new Date()),
                 };
                 this.warp(seq);
                 this.sequences.unshift(seq);
-                this.get(seq.key);
+                this.get(this.saveSequence.key);
                 this.showSaveDialog = false;
             });
         },
@@ -662,7 +699,11 @@ const monitor = {
                     this.toast(result.message);
                     return;
                 }
-                this.getSnapshot(this.skipSequence.key)
+                if (this.standalone) {
+                    this.getSnapshot(this.skipSequence.key)
+                } else {
+                    this.get(this.skipSequence.key)
+                }
                 this.showSkipDialog = false;
             });
         },
@@ -696,7 +737,7 @@ const monitor = {
                 key: null,
                 value: 0,
                 increment: 1,
-                cache: 10000,
+                cache: 5000,
             }
             this.showSaveDialog = true;
         },
@@ -724,14 +765,34 @@ const monitor = {
             if (!sequence) {
                 return;
             }
-            this.skipSequence = {
-                key: sequence.key,
-                size: null,
-                current: sequence.snapshot.cur,
-                expected: sequence.snapshot.cur,
-                increment: sequence.snapshot.increment,
+            if (this.standalone) {
+                this.skipSequence = {
+                    key: sequence.key,
+                    size: null,
+                    current: sequence.snapshot.cur,
+                    expected: sequence.snapshot.cur,
+                    increment: sequence.snapshot.increment,
+                };
+            } else {
+                this.skipSequence = {
+                    key: sequence.key,
+                    size: null,
+                    current: sequence.value,
+                    expected: sequence.value,
+                    increment: sequence.increment,
+                };
             }
             this.showSkipDialog = true;
+        },
+        openLoadDialog(key) {
+            let sequence = this.getByKey(key);
+            if (!sequence) {
+                return;
+            }
+            this.loadSequence = {
+                key: sequence.key,
+            };
+            this.showLoadDialog = true;
         },
         itemExpanded(data) {
             if (data.value && !data.item.hasSnapshot) {
@@ -760,6 +821,35 @@ const monitor = {
             }
             return sequence;
         },
+        delByKey(key) {
+            for (let i in this.sequences) {
+                if (this.sequences[i].key == key) {
+                    this.sequences.splice(i, 1);
+                    break;
+                }
+            }
+        },
+        format(date) {
+            let pattern = "yyyy-MM-dd HH:mm:ss";
+            let o = {
+                "M+": date.getMonth() + 1,
+                "d+": date.getDate(),
+                "H+": date.getHours(),
+                "m+": date.getMinutes(),
+                "s+": date.getSeconds(),
+                "q+": Math.floor((date.getMonth() + 3) / 3),
+                "S": date.getMilliseconds()
+            };
+            if (/(y+)/.test(pattern)) {
+                pattern = pattern.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+            }
+            for (let k in o) {
+                if (new RegExp("(" + k + ")").test(pattern)) {
+                    pattern = pattern.replace(RegExp.$1, (RegExp.$1.length === 1 ? o[k] : ("00" + o[k]).substr(("" + o[k]).length)));
+                }
+            }
+            return pattern;
+        },
         init() {
             this.list();
         },
@@ -770,8 +860,7 @@ const monitor = {
 };
 const router = new VueRouter({
     routes: [
-        {name: '/', path: '/', component: home},
-        {name: 'home', path: '/home', component: home},
+        {name: '/', path: '/', component: monitor},
         {name: 'monitor', path: '/monitor', component: monitor},
     ]
 });

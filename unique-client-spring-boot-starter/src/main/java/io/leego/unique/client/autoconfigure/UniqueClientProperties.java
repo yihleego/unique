@@ -4,6 +4,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Configuration properties for unique-client.
@@ -25,6 +27,8 @@ public class UniqueClientProperties {
     private Hystrix hystrix = new Hystrix();
     @NestedConfigurationProperty
     private Mybatis mybatis = new Mybatis();
+    @NestedConfigurationProperty
+    private Validation validation = new Validation();
 
     public boolean isEnabled() {
         return enabled;
@@ -82,6 +86,14 @@ public class UniqueClientProperties {
         this.mybatis = mybatis;
     }
 
+    public Validation getValidation() {
+        return validation;
+    }
+
+    public void setValidation(Validation validation) {
+        this.validation = validation;
+    }
+
     protected static class Mybatis {
         @NestedConfigurationProperty
         private Plugin plugin = new Plugin();
@@ -122,7 +134,7 @@ public class UniqueClientProperties {
     }
 
     protected static class Cache {
-        /** Whether to enable Cache. */
+        /** Whether to enable caching. Please use cached mode if the servers are clustered. */
         private boolean enabled = false;
         /** Cache size. */
         private Integer size;
@@ -141,6 +153,29 @@ public class UniqueClientProperties {
 
         public void setSize(Integer size) {
             this.size = size;
+        }
+    }
+
+    protected static class Validation {
+        /** Whether to enable validation. */
+        private boolean enabled = true;
+        /** Keys to be validated. */
+        private List<String> keys = Collections.emptyList();
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public List<String> getKeys() {
+            return keys;
+        }
+
+        public void setKeys(List<String> keys) {
+            this.keys = keys;
         }
     }
 

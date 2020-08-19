@@ -4,10 +4,11 @@ import feign.Feign;
 import feign.Request;
 import feign.Retryer;
 import feign.okhttp.OkHttpClient;
+import io.leego.unique.client.codec.RequestEncoder;
 import io.leego.unique.client.codec.ResponseDecoder;
 import io.leego.unique.client.codec.ResponseErrorDecoder;
-import io.leego.unique.client.service.UniqueService;
 import io.leego.unique.client.service.UniqueServiceRequester;
+import io.leego.unique.common.service.UniqueService;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -20,29 +21,41 @@ public final class UniqueClients {
     }
 
     /**
-     * Creates a {@link SimpleUniqueClient}.
-     **/
+     * Creates an instance of {@link SimpleUniqueClient}.
+     * Please use {@link UniqueClients#newCached} if the servers are clustered.
+     * @param uniqueService The instance of {@link UniqueService}.
+     * @return an instance of {@link SimpleUniqueClient}.
+     */
     public static UniqueClient newSimple(UniqueService uniqueService) {
         return new SimpleUniqueClient(uniqueService);
     }
 
     /**
-     * Creates a {@link CachedUniqueClient} that caches a fixed number of sequences.
-     **/
+     * Creates an instance of {@link CachedUniqueClient} that caches a fixed number of sequences.
+     * @param uniqueService The instance of {@link UniqueService}.
+     * @return an instance of {@link CachedUniqueClient}.
+     */
     public static UniqueClient newCached(UniqueService uniqueService) {
         return new CachedUniqueClient(uniqueService);
     }
 
     /**
-     * Creates a {@link CachedUniqueClient} that caches a fixed number of sequences.
-     **/
+     * Creates an instance of {@link CachedUniqueClient} that caches a fixed number of sequences.
+     * @param uniqueService The instance of {@link UniqueService}.
+     * @param cacheSize     The cache size.
+     * @return an instance of {@link CachedUniqueClient}.
+     */
     public static UniqueClient newCached(UniqueService uniqueService, Integer cacheSize) {
         return new CachedUniqueClient(uniqueService, cacheSize);
     }
 
     /**
-     * Creates a {@link CachedUniqueClient} that caches a fixed number of sequences.
-     **/
+     * Creates an instance of {@link CachedUniqueClient} that caches a fixed number of sequences.
+     * @param uniqueService The instance of {@link UniqueService}.
+     * @param cacheSize     The cache size.
+     * @param timeout       The timeout.
+     * @return an instance of {@link CachedUniqueClient}.
+     */
     public static UniqueClient newCached(UniqueService uniqueService, Integer cacheSize, Duration timeout) {
         return new CachedUniqueClient(uniqueService, cacheSize, timeout);
     }
@@ -76,7 +89,7 @@ public final class UniqueClients {
         private boolean ssl = false;
         /** Request timeout. */
         private Duration timeout = TIMEOUT;
-        /** Whether to enable caching. */
+        /** Whether to enable caching. Please use cache if the servers are clustered. */
         private boolean cached = false;
         /** Cache size. */
         private Integer cacheSize;
@@ -117,7 +130,7 @@ public final class UniqueClients {
         }
 
         public UniqueClient build() {
-            if (this.url == null && host == null) {
+            if (this.url == null && this.host == null) {
                 throw new IllegalArgumentException("Url or host cannot be empty");
             }
             String targetUrl = this.url != null
@@ -132,13 +145,14 @@ public final class UniqueClients {
                     true);
             UniqueService uniqueService = Feign.builder()
                     .client(new OkHttpClient())
+                    .encoder(new RequestEncoder())
                     .decoder(new ResponseDecoder())
                     .errorDecoder(new ResponseErrorDecoder())
                     .retryer(Retryer.NEVER_RETRY)
                     .options(options)
                     .target(UniqueServiceRequester.class, targetUrl);
-            if (cached) {
-                return new CachedUniqueClient(uniqueService, cacheSize, timeout);
+            if (this.cached) {
+                return new CachedUniqueClient(uniqueService, this.cacheSize, timeout);
             } else {
                 return new SimpleUniqueClient(uniqueService);
             }

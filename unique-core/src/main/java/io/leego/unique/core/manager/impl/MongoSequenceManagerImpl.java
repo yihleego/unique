@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Yihleego
@@ -62,11 +64,30 @@ public class MongoSequenceManagerImpl implements SequenceManager {
     }
 
     @Override
+    public List<String> findKeys(Set<String> keys) {
+        Bson filter = Filters.in(Constants.Mongo.KEY, keys);
+        return toList(collection.find(filter, Sequence.class))
+                .stream()
+                .map(Sequence::getKey)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public int updateValue(String key, long value) {
         Bson filter = Filters.and(
                 Filters.eq(Constants.Mongo.KEY, key),
                 Filters.lt(Constants.Mongo.VALUE, value));
         Bson update = Updates.set(Constants.Mongo.VALUE, value);
+        return (int) collection.updateOne(filter, update).getModifiedCount();
+    }
+
+    @Override
+    public int compareAndUpdateValue(String key, long expectedValue, long newValue, int version) {
+        Bson filter = Filters.and(
+                Filters.eq(Constants.Mongo.KEY, key),
+                Filters.eq(Constants.Mongo.VALUE, expectedValue),
+                Filters.eq(Constants.Mongo.VERSION, version));
+        Bson update = Updates.set(Constants.Mongo.VALUE, newValue);
         return (int) collection.updateOne(filter, update).getModifiedCount();
     }
 

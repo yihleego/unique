@@ -1,21 +1,21 @@
 package io.leego.unique.client;
 
-import io.leego.unique.client.service.UniqueService;
 import io.leego.unique.common.Result;
 import io.leego.unique.common.Segment;
 import io.leego.unique.common.exception.ObtainErrorException;
+import io.leego.unique.common.service.UniqueService;
 
 import java.util.Collection;
 import java.util.function.Supplier;
 
 /**
+ * Please use {@link CachedUniqueClient} if the servers are clustered.
  * @author Yihleego
  */
 public class SimpleUniqueClient extends AbstractUniqueClient {
-    protected final UniqueService uniqueService;
 
     public SimpleUniqueClient(UniqueService uniqueService) {
-        this.uniqueService = uniqueService;
+        super(uniqueService);
     }
 
     @Override

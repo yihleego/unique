@@ -3,7 +3,7 @@ create table "sequence"
     "seq_key"         varchar(127) primary key not null,
     "seq_value"       bigint  default 0        not null,
     "seq_increment"   integer default 1        not null,
-    "seq_cache"       integer default 10000    not null,
+    "seq_cache"       integer default 5000     not null,
     "seq_version"     integer default 1        not null,
     "seq_create_time" timestamp                null,
     "seq_update_time" timestamp                null

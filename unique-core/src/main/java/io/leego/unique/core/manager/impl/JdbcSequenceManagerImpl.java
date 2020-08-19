@@ -18,6 +18,7 @@ import org.apache.ibatis.type.JdbcType;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,10 +56,26 @@ public class JdbcSequenceManagerImpl implements SequenceManager {
     }
 
     @Override
+    public List<String> findKeys(Set<String> keys) {
+        try (SqlSession session = sqlSessionFactory.openSession(false)) {
+            SequenceDAO dao = session.getMapper(SequenceDAO.class);
+            return dao.findKeys(keys, tableName);
+        }
+    }
+
+    @Override
     public int updateValue(String key, long value) {
         try (SqlSession session = sqlSessionFactory.openSession(true)) {
             SequenceDAO dao = session.getMapper(SequenceDAO.class);
             return dao.updateValue(key, value, tableName);
+        }
+    }
+
+    @Override
+    public int compareAndUpdateValue(String key, long expectedValue, long newValue, int version) {
+        try (SqlSession session = sqlSessionFactory.openSession(true)) {
+            SequenceDAO dao = session.getMapper(SequenceDAO.class);
+            return dao.compareAndUpdateValue(key, expectedValue, newValue, version, tableName);
         }
     }
 

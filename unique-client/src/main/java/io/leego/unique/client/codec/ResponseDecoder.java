@@ -1,14 +1,7 @@
 package io.leego.unique.client.codec;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import feign.Response;
 import feign.codec.DecodeException;
 import feign.codec.Decoder;
@@ -25,20 +18,8 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Yihleego
  */
-public class ResponseDecoder implements Decoder {
-    private final ObjectMapper objectMapper;
+public class ResponseDecoder extends FeignCodec implements Decoder {
     private final ConcurrentMap<String, JavaType> typeMap = new ConcurrentHashMap<>();
-
-    public ResponseDecoder() {
-        this.objectMapper = new ObjectMapper()
-                .registerModules(new ParameterNamesModule(), new Jdk8Module())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .disable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
-                .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)
-                .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
-                .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
-    }
 
     @Override
     public Object decode(Response response, Type type) throws IOException {

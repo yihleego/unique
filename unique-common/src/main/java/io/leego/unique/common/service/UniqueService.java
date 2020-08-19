@@ -1,7 +1,9 @@
-package io.leego.unique.client.service;
+package io.leego.unique.common.service;
 
 import io.leego.unique.common.Result;
 import io.leego.unique.common.Segment;
+
+import java.util.Set;
 
 /**
  * @author Yihleego
@@ -22,5 +24,11 @@ public interface UniqueService {
      * @return the next segment.
      */
     Result<Segment> next(String key, int size);
+
+    /**
+     * Returns the keys if they are present.
+     * @return the present keys.
+     */
+    Result<Set<String>> contains(Set<String> keys);
 
 }

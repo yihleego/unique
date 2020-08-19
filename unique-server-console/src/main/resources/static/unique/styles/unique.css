@@ -46,6 +46,20 @@ main {
     padding-top: 64px;
 }
 
+.navbar-title {
+
+}
+
+.navbar-mode {
+    font-size: 12px;
+}
+
+.navbar-mode::before {
+    content: "|";
+    padding: 5px;
+    font-size: 1.7em;
+}
+
 .title {
     overflow: hidden;
     display: block;
@@ -63,6 +77,10 @@ main {
     align-items: center;
     align-content: center;
     flex-wrap: wrap;
+}
+
+.font-grey {
+    color: gray;
 }
 
 [v-cloak] {

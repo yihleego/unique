@@ -1,7 +1,10 @@
 package io.leego.unique.client;
 
+import io.leego.unique.common.Validation;
+
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -33,5 +36,12 @@ public interface UniqueClient {
      * @return the next segment of the sequence.
      */
     <C extends Collection<Long>> C next(String key, int size, Supplier<C> collectionFactory);
+
+    /**
+     * Returns the result of validation.
+     * @param keys the keys.
+     * @return the result of validation.
+     */
+    Validation validateKeys(Set<String> keys);
 
 }

@@ -1,6 +1,7 @@
 package io.leego.unique.common;
 
 import java.io.Serializable;
+import java.util.function.Function;
 
 /**
  * @author Yihleego
@@ -118,6 +119,10 @@ public class Result<T> implements Serializable {
         this.code = code;
     }
 
+    public <U> Result<U> map(Function<? super T, ? extends U> converter) {
+        return new Result<>(converter.apply(data), success, message, code);
+    }
+
     public String toJSONString() {
         StringBuilder sb = new StringBuilder("{");
         if (data != null) {
@@ -140,9 +145,9 @@ public class Result<T> implements Serializable {
 
     @Override
     public String toString() {
-        return "Result{" + "data=" + data +
+        return "Result{data=" + (data != null ? data.toString() : "null") +
                 ", success=" + success +
-                ", message='" + message + '\'' +
+                ", message=\"" + message + '\"' +
                 ", code=" + code +
                 '}';
     }
@@ -158,8 +163,13 @@ public class Result<T> implements Serializable {
             return this;
         }
 
-        public Builder<T> success(Boolean success) {
-            this.success = success;
+        public Builder<T> success() {
+            this.success = true;
+            return this;
+        }
+
+        public Builder<T> failure() {
+            this.success = false;
             return this;
         }
 

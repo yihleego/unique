@@ -23,6 +23,8 @@ public class UniqueServerProperties {
     @NestedConfigurationProperty
     private MongoDB mongodb = new MongoDB();
     @NestedConfigurationProperty
+    private Cluster cluster = new Cluster();
+    @NestedConfigurationProperty
     private Console console = new Console();
 
     public Jdbc getJdbc() {
@@ -39,6 +41,14 @@ public class UniqueServerProperties {
 
     public void setMongodb(MongoDB mongodb) {
         this.mongodb = mongodb;
+    }
+
+    public Cluster getCluster() {
+        return cluster;
+    }
+
+    public void setCluster(Cluster cluster) {
+        this.cluster = cluster;
     }
 
     public Console getConsole() {
@@ -175,8 +185,41 @@ public class UniqueServerProperties {
         }
     }
 
+    protected static class Cluster {
+        /** Whether to enable cluster. */
+        private boolean enabled = false;
+        /** Retries */
+        private int retries = 10;
+        /** Whether to allow obtaining single sequence. */
+        private boolean allowSingle = false;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public int getRetries() {
+            return retries;
+        }
+
+        public void setRetries(int retries) {
+            this.retries = retries;
+        }
+
+        public boolean isAllowSingle() {
+            return allowSingle;
+        }
+
+        public void setAllowSingle(boolean allowSingle) {
+            this.allowSingle = allowSingle;
+        }
+    }
+
     protected static class Console {
-        /** Whether to enable Console. */
+        /** Whether to enable console. */
         private boolean enabled = false;
 
         public boolean isEnabled() {

@@ -191,7 +191,7 @@ public class AutoSeqInterceptor implements Interceptor {
     }
 
     private boolean hasLength(String text) {
-        return text != null && text.length() > 0;
+        return text != null && !text.isEmpty();
     }
 
     private String getAlias(String s1, String s2) {

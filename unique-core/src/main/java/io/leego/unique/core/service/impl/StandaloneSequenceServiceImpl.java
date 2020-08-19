@@ -2,15 +2,18 @@ package io.leego.unique.core.service.impl;
 
 import io.leego.unique.common.Result;
 import io.leego.unique.common.Segment;
+import io.leego.unique.common.Snapshot;
+import io.leego.unique.common.enums.Mode;
 import io.leego.unique.common.util.ErrorCode;
 import io.leego.unique.core.entity.Sequence;
-import io.leego.unique.core.entity.SnapshotSequence;
 import io.leego.unique.core.manager.SequenceManager;
-import io.leego.unique.core.service.SequenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -18,25 +21,24 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Yihleego
  */
-public class SequenceServiceImpl implements SequenceService {
-    private static final Logger logger = LoggerFactory.getLogger(SequenceServiceImpl.class);
+public class StandaloneSequenceServiceImpl extends AbstractSequenceServiceImpl {
+    private static final Logger logger = LoggerFactory.getLogger(StandaloneSequenceServiceImpl.class);
     private final ConcurrentMap<String, CachedSeq> seqMap = new ConcurrentHashMap<>(32);
-    private final SequenceManager sequenceManager;
-    private volatile boolean initialized = false;
 
-    public SequenceServiceImpl(SequenceManager sequenceManager) {
-        this.sequenceManager = sequenceManager;
+    public StandaloneSequenceServiceImpl(SequenceManager sequenceManager) {
+        super(sequenceManager);
+        this.init();
     }
 
     @Override
     public Result<Long> next(String key) {
         CachedSeq seq = seqMap.get(key);
         if (seq == null) {
-            logger.error("There is no sequence named \"{}\".", key);
-            return Result.buildFailure(ErrorCode.NOT_FOUND, "There is no sequence named \"" + key + '\"');
+            logger.error("There is no sequence \"{}\".", key);
+            return Result.buildFailure(ErrorCode.NOT_FOUND, "There is no sequence \"" + key + '\"');
         }
         long value = seq.getCur().addAndGet(seq.getIncrement());
-        check(key, seq);
+        check(seq);
         return Result.buildSuccess(value);
     }
 
@@ -48,30 +50,69 @@ public class SequenceServiceImpl implements SequenceService {
         }
         CachedSeq seq = seqMap.get(key);
         if (seq == null) {
-            logger.error("There is no sequence named \"{}\".", key);
-            return Result.buildFailure(ErrorCode.NOT_FOUND, "There is no sequence named \"" + key + '\"');
+            logger.error("There is no sequence \"{}\".", key);
+            return Result.buildFailure(ErrorCode.NOT_FOUND, "There is no sequence \"" + key + '\"');
         }
         int increment = seq.getIncrement();
         long end = seq.getCur().addAndGet(size * increment);
         long begin = end - (size - 1) * increment;
-        check(key, seq);
+        check(seq);
         return Result.buildSuccess(new Segment(begin, end, increment));
     }
 
     @Override
-    public void init() {
-        if (initialized) {
-            logger.warn("The service has already been initialized.");
-            return;
+    public Result<Set<String>> contains(Set<String> keys) {
+        if (keys == null || keys.isEmpty()) {
+            return Result.buildSuccess(Collections.emptySet());
         }
-        logger.info("Starting loading data from the database.");
-        sequenceManager.findAll().forEach(this::merge);
-        initialized = true;
-        logger.info("Finished loading data from the database.");
+        Set<String> presents = new HashSet<>();
+        for (String key : keys) {
+            if (seqMap.containsKey(key)) {
+                presents.add(key);
+            }
+        }
+        return Result.buildSuccess(presents);
     }
 
     @Override
-    public void merge(final Sequence sequence) {
+    public Result<Snapshot> getSnapshot(String key) {
+        CachedSeq seq = seqMap.get(key);
+        if (seq == null) {
+            return Result.buildFailure(ErrorCode.NOT_FOUND, "There is no sequence \"" + key + '\"');
+        }
+        return Result.buildSuccess(
+                new Snapshot(
+                        seq.getKey(),
+                        seq.getCur().get(),
+                        seq.getMax().get(),
+                        seq.getIncrement(),
+                        seq.getCache(),
+                        seq.getVersion(),
+                        LocalDateTime.now()));
+    }
+
+    @Override
+    public Result<Void> load(String key) {
+        Sequence sequence = sequenceManager.findByKey(key);
+        if (sequence == null) {
+            return Result.buildFailure(ErrorCode.NOT_FOUND, "There is no sequence \"" + key + '\"');
+        }
+        merge(sequence);
+        return Result.buildSuccess();
+    }
+
+    @Override
+    public Result<Mode> getMode() {
+        return Result.buildSuccess(Mode.STANDALONE);
+    }
+
+    private void init() {
+        logger.info("Starting loading data from the database.");
+        sequenceManager.findAll().forEach(this::merge);
+        logger.info("Finished loading data from the database.");
+    }
+
+    private void merge(final Sequence sequence) {
         if (sequence == null) {
             return;
         }
@@ -85,26 +126,8 @@ public class SequenceServiceImpl implements SequenceService {
         }
     }
 
-    @Override
-    public SnapshotSequence getSnapshot(String key) {
-        if (key == null) {
-            return null;
-        }
-        CachedSeq cached = seqMap.get(key);
-        if (cached == null) {
-            return null;
-        }
-        return new SnapshotSequence(
-                cached.getKey(),
-                cached.getCur().get(),
-                cached.getMax().get(),
-                cached.getIncrement(),
-                cached.getCache(),
-                cached.getVersion(),
-                LocalDateTime.now());
-    }
-
-    private void check(final String key, final CachedSeq seq) {
+    private void check(final CachedSeq seq) {
+        String key = seq.getKey();
         AtomicLong cur = seq.getCur();
         AtomicLong max = seq.getMax();
         long expectedValue;

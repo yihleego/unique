@@ -3,8 +3,9 @@ package io.leego.unique.server.console.controller;
 import io.leego.unique.common.Page;
 import io.leego.unique.common.Result;
 import io.leego.unique.common.Segment;
+import io.leego.unique.common.Snapshot;
+import io.leego.unique.common.enums.Mode;
 import io.leego.unique.core.entity.Sequence;
-import io.leego.unique.core.entity.SnapshotSequence;
 import io.leego.unique.server.console.dto.SequenceSaveDTO;
 import io.leego.unique.server.console.dto.SequenceSearchDTO;
 import io.leego.unique.server.console.dto.SequenceUpdateDTO;
@@ -57,7 +58,7 @@ public class ConsoleController {
     }
 
     @GetMapping("sequences/{key}/snapshot")
-    public Result<SnapshotSequence> getSnapshot(@PathVariable String key) {
+    public Result<Snapshot> getSnapshot(@PathVariable String key) {
         return consoleService.getSnapshot(key);
     }
 
@@ -69,6 +70,11 @@ public class ConsoleController {
     @PutMapping("configurations/{key}")
     public Result<Void> load(@PathVariable String key) {
         return consoleService.load(key);
+    }
+
+    @GetMapping("modes")
+    public Result<Mode> getMode() {
+        return consoleService.getMode();
     }
 
 }

@@ -42,7 +42,7 @@ public class NamedThreadFactory implements ThreadFactory {
     }
 
     private String nextName() {
-        if (namePrefix == null || namePrefix.length() == 0) {
+        if (namePrefix == null || namePrefix.isEmpty()) {
             return group.getName() + "-" + threadNumber.getAndIncrement();
         } else {
             return group.getName() + "-" + namePrefix + "-" + threadNumber.getAndIncrement();
