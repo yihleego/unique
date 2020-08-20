@@ -14,7 +14,7 @@ $ mvn clean install
 
 ## Documentation
 
-[Chinese Document 中文版](README.ZH_CN.md)
+[Chinese Document 中文文档](README.ZH_CN.md)
 
 #### Client
 

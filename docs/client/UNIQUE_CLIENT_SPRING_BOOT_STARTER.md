@@ -21,9 +21,9 @@ If you are using Maven just add the following dependency to your pom.xml:
 |spring.unique.uri|The absolute URL or resolvable hostname (the protocol is optional).|
 |spring.unique.service-id|The name of the service with optional protocol prefix.|
 |spring.unique.timeout|Request timeout.|
-|spring.unique.cache.enabled|Whether to enable caching|
+|spring.unique.cache.enabled|Whether to enable caching.|
 |spring.unique.cache.size|Cache size.|
-|spring.unique.hystrix.enabled|Whether to enable Hystrix.|
+|spring.unique.hystrix.enabled|Whether to enable `Hystrix`.|
 |spring.unique.mybatis.plugin.enabled|Whether to enable mybatis-plugin.|
 |spring.unique.validation.enabled|Whether to enable validation.|
 |spring.unique.validation.keys|Keys to be validated.|
@@ -52,7 +52,7 @@ spring:
 
 ### Spring Cloud
 
-Assume there is a sequence service named `sequence` is registered.
+Assume there is a registered sequence service named `sequence`.
 
 Properties
 

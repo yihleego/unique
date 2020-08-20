@@ -1,10 +1,10 @@
 # Unique Core
 
-## Dependency
+## 添加依赖
 
-To use the `unique-core` module, you need to include the `unique-core-0.1.0.jar` file and its dependencies in the classpath.
+使用`unique-core`模块, 需要在类路径中包含`unique-core-0.1.0.jar`文件及其依赖项。
 
-If you are using Maven just add the following dependency to your pom.xml:
+Maven项目中只需将以下依赖项添加到pom.xml文件:
 
 ```xml
 <dependency>
@@ -14,11 +14,11 @@ If you are using Maven just add the following dependency to your pom.xml:
 </dependency>
 ```
 
-## Getting Started
+## 开始使用
 
 ### JDBC
 
-Take MySQL as an example, you need to include the `mysql-connector-java-x.x.x.jar` file.
+以MySQL为例，需要在类路径中包含`MySQL-connector-java-x.x.x.jar`文件。
 
 ```xml
 <dependency>
@@ -28,9 +28,9 @@ Take MySQL as an example, you need to include the `mysql-connector-java-x.x.x.ja
 </dependency>
 ```
 
-Create a schema and table.
+创建数据库和表。
 
-[More Databases](../../resources/jdbc)
+[点击查看更多数据库](../../resources/jdbc)
 
 ```mysql
 create database `unique`;
@@ -50,7 +50,7 @@ create table `sequence`
     comment 'sequence';
 ```
 
-Notice that the `JdbcSequenceManagerImpl` requires a `DataSource`. This can be any `DataSource` and should be configured.
+实例化`JdbcSequenceManagerImpl`需要一个`DataSource`对象。
 
 ```java
 String driverClassName = "com.mysql.cj.jdbc.Driver";
@@ -67,13 +67,13 @@ DataSource dataSource = new HikariDataSource(config);
 SequenceManager sequenceManager = new JdbcSequenceManagerImpl(dataSource, table);
 ```
 
-Use standalone mode.
+使用单机模式。
 
 ```java
 SequenceService sequenceService = new StandaloneSequenceServiceImpl(sequenceManager);
 ```
 
-Use cluster mode.
+使用群集模式。
 
 ```java
 SequenceService sequenceService = new ClusterSequenceServiceImpl(sequenceManager);
@@ -81,7 +81,7 @@ SequenceService sequenceService = new ClusterSequenceServiceImpl(sequenceManager
 
 ### MongoDB
 
-You need to include the `mongodb-driver-sync-x.x.x.jar` file.
+需要在类路径中包含`mongodb-driver-sync-x.x.x.jar`文件。
 
 ```xml
 <dependency>
@@ -91,7 +91,7 @@ You need to include the `mongodb-driver-sync-x.x.x.jar` file.
 </dependency>
 ```
 
-Notice that the `MongoSequenceManagerImpl` requires a `MongoClient`.
+实例化`MongoSequenceManagerImpl`需要一个`MongoClient`对象。
 
 ```java
 String uri = "mongodb://localhost:27017";
@@ -111,23 +111,23 @@ MongoClient mongoClient = MongoClients.create(settings);
 SequenceManager sequenceManager = new MongoSequenceManagerImpl(mongoClient, database, collection);
 ```
 
-Use standalone mode.
+使用单机模式。
 
 ```java
 SequenceService sequenceService = new StandaloneSequenceServiceImpl(sequenceManager);
 ```
 
-Use cluster mode.
+使用群集模式。
 
 ```java
 SequenceService sequenceService = new ClusterSequenceServiceImpl(sequenceManager);
 ```
 
-### Use Client
+### 与客户端一起使用
 
-See the [unique-client](../client/UNIQUE_CLIENT.md) for details.
+有关客户端详细信息，请参见[unique-client](../client/UNIQUE_CLIENT.ZH_CN.md)。
 
-**Notice that the `SimpleUniqueClient`'s performance is terrible in cluster mode, please use `CachedUniqueClient` instead of `SimpleUniqueClient`.** 
+**请注意集群模式下`SimpleUniqueClient`性能非常糟糕, 请使用`CachedUniqueClient`。** 
 
 ```java
 // SimpleUniqueClient

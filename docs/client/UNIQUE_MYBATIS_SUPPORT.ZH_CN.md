@@ -1,10 +1,10 @@
 # Unique MyBatis Support
 
-## Dependency
+## 添加依赖
 
-To use the `unique-mybatis-support` module, you need to include the `unique-mybatis-support-0.1.0.jar` file and its dependencies in the classpath.
+使用`unique-mybatis-support`模块, 需要在类路径中包含`unique-mybatis-support-0.1.0.jar`文件及其依赖项。
 
-If you are using Maven just add the following dependency to your pom.xml:
+Maven项目中只需将以下依赖项添加到pom.xml文件:
 
 ```xml
 <dependency>
@@ -14,11 +14,11 @@ If you are using Maven just add the following dependency to your pom.xml:
 </dependency>
 ```
 
-## Configuration
+## 配置
 
 ### MyBatis SqlSessionFactoryBean
 
-Assume there is an instance of the `UniqueClient`.
+假设存在一个变量名为`uniqueClient`的`UniqueClient`类的实例。
 
 ```java
 AutoSeqInterceptor interceptor = new AutoSeqInterceptor(uniqueClient);
@@ -45,15 +45,15 @@ spring:
         enabled: true
 ```
 
-## Usage
+## 使用方法
 
-Assume there is a class defined like the following:
+假设存在如下定义的类：
 
 ```java
 import io.leego.unique.mybatis.support.annotation.AutoSeq;
 
 public class Foo {
-    // Assume the name of the sequence is "foo".
+    // 假设对应序列的名称是"foo"
     @AutoSeq("foo")
     private Long id;
     private String name;
@@ -61,7 +61,7 @@ public class Foo {
 }
 ```
 
-Assume there is a mapper interface defined like the following:
+假设存在如下定义的Mapper：
 
 ```java
 public interface FooMapper {
@@ -70,7 +70,7 @@ public interface FooMapper {
 }
 ```
 
-Call insert method:
+调用保存接口：
 
 ```java
 @Service

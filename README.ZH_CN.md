@@ -14,7 +14,7 @@ $ mvn clean install
 
 ## 文档
 
-[English Document 英文版](README.md)
+[English Document 英文文档](README.md)
 
 #### 客户端
 

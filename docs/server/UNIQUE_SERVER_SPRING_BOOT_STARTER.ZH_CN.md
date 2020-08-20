@@ -1,10 +1,10 @@
 # Unique Server Spring Boot Starter
 
-## Dependency
+## 添加依赖
 
-To use the `unique-server-spring-boot-starter` module, you need to include the `unique-server-spring-boot-starter-0.1.0.jar` file and its dependencies in the classpath.
+使用`unique-server-spring-boot-starter`模块, 需要在类路径中包含`unique-server-spring-boot-starter-0.1.0.jar`文件及其依赖项。
 
-If you are using Maven just add the following dependency to your pom.xml:
+Maven项目中只需将以下依赖项添加到pom.xml文件:
 
 ```xml
 <dependency>
@@ -13,32 +13,32 @@ If you are using Maven just add the following dependency to your pom.xml:
     <version>0.1.0</version>
 </dependency>
 ```
-## Configuration
+## 配置
 
 |Property|Description|
 |:-|:-|
-|spring.unique.jdbc.enabled|Whether to enable JDBC.|
-|spring.unique.jdbc.driver-class-name|Fully qualified name of the JDBC driver.|
-|spring.unique.jdbc.url|JDBC URL of the database.|
-|spring.unique.jdbc.username|Login username of the database.|
-|spring.unique.jdbc.password|Login password of the database.|
-|spring.unique.jdbc.table|Table name.|
-|spring.unique.mongodb.enabled|Whether to enable MongoDB.|
-|spring.unique.mongodb.uri|Mongo database URI.|
-|spring.unique.mongodb.username|Login user of the mongo server.|
-|spring.unique.mongodb.password|Login password of the mongo server.|
-|spring.unique.mongodb.database|Database name.|
-|spring.unique.mongodb.collection|Collection name.|
-|spring.unique.cluster.enabled|Whether to enable cluster.|
-|spring.unique.cluster.retries|Retries.|
-|spring.unique.cluster.allow-single|Whether to allow obtaining single sequence.|
-|spring.unique.console.enabled|Whether to enable console.|
+|spring.unique.jdbc.enabled|是否启用JDBC。|
+|spring.unique.jdbc.driver-class-name|JDBC驱动类名。|
+|spring.unique.jdbc.url|数据库的JDBC URL。|
+|spring.unique.jdbc.username|数据库的登录用户名。|
+|spring.unique.jdbc.password|数据库的登录密码。|
+|spring.unique.jdbc.table|表名。|
+|spring.unique.mongodb.enabled|是否启用MongoDB。|
+|spring.unique.mongodb.uri|MongoDB数据库URI。|
+|spring.unique.mongodb.username|MongoDB服务器的登录用户。|
+|spring.unique.mongodb.password|MongoDB服务器的登录密码。|
+|spring.unique.mongodb.database|数据库名称。|
+|spring.unique.mongodb.collection|集合名称。|
+|spring.unique.cluster.enabled|是否启用群集。|
+|spring.unique.cluster.retries|重试次数。|
+|spring.unique.cluster.allow-single|集群模式下是否允许获取单个序列。|
+|spring.unique.console.enabled|是否启用控制台。|
 
-## Getting Started
+## 开始使用
 
 ### JDBC
 
-Take MySQL as an example, you need to include the `mysql-connector-java-x.x.x.jar` file.
+以MySQL为例，需要在类路径中包含`MySQL-connector-java-x.x.x.jar`文件。
 
 ```xml
 <dependency>
@@ -48,9 +48,9 @@ Take MySQL as an example, you need to include the `mysql-connector-java-x.x.x.ja
 </dependency>
 ```
 
-Create a schema and table.
+创建数据库和表。
 
-[More Databases](../../resources/jdbc)
+[点击查看更多数据库](../../resources/jdbc)
 
 ```mysql
 create database `unique`;
@@ -131,28 +131,28 @@ spring:
       database: unique
       collection: sequence
 ```
-### Usage
+### 使用方法
 
-#### Use Client
+#### 使用客户端
 
-It is recommended to use the client. See the [unique-client](../client/UNIQUE_CLIENT.md) for details.
+推荐使用客户端，有关客户端详细信息，请参见[unique-client](UNIQUE_CLIENT.ZH_CN.md)。
 
-#### Use cURL
+#### 使用cURL
 
-Obtain one sequence named `test-key`.
+获取一个名称为`test-key`的序列号。
 
 ```bash
 curl --location --request GET 'https://localhost:8080/sequences/test-key' --header 'Content-Type: application/json'
 ```
 
-Obtain several sequences named `test-key`.
+获取多个名称为`test-key`的序列号。
 
 ```bash
 curl --location --request GET 'https://localhost:8080/sequences/test-key/segments?size=10' --header 'Content-Type: application/json'
 ```
 
-## Enable Cluster
-
+## 启用群集
+   
 Properties
 
 ```properties
@@ -170,11 +170,11 @@ spring:
       retries: 10
 ```
 
-## Enable Console
+## 启用控制台
 
-See the [unique-server-console](UNIQUE_SERVER_CONSOLE.md) for details.
+有关控制台详细信息，请参见[unique-server-console](UNIQUE_SERVER_CONSOLE.ZH_CN.md)。
 
-You need to include the `unique-server-console-0.1.0.jar` file.
+需要在类路径中包含`unique-server-console-0.1.0.jar`文件.
 
 ```xml
 <dependency>

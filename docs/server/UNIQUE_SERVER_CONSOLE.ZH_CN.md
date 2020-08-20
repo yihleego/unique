@@ -1,10 +1,10 @@
 # Unique Server Console
 
-## Dependency
+## 添加依赖
 
-To use the `unique-server-console` module, you need to include the `unique-server-console-0.1.0.jar` file and its dependencies in the classpath.
+使用`unique-server-console`模块, 需要在类路径中包含`unique-server-console-0.1.0.jar`文件及其依赖项。
 
-If you are using Maven just add the following dependency to your pom.xml:
+Maven项目中只需将以下依赖项添加到pom.xml文件:
 
 ```xml
 <dependency>
@@ -14,7 +14,7 @@ If you are using Maven just add the following dependency to your pom.xml:
 </dependency>
 ```
 
-## Configuration
+## 配置
 
 Properties
 
@@ -31,18 +31,18 @@ spring:
       enabled: true
 ```
 
-Console access address:
+控制台访问地址：
 
 ```
 http://${host}:${port}/unique/console.html
 ```
 
-## Console Page
+## 控制台页面
 
-### Standalone
+### 单机模式
 
 ![Standalone](../images/standalone.png)
 
-### Cluster
+### 集群模式
 
 ![Cluster](../images/cluster.png)
